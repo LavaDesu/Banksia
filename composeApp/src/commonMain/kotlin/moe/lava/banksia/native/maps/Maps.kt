@@ -7,6 +7,6 @@ data class Marker(val name: String)
 
 @Composable
 expect fun Maps(
-    modifier: Modifier,
-    markers: List<Marker>
+    modifier: Modifier = Modifier,
+    markers: List<Marker> = listOf()
 )
