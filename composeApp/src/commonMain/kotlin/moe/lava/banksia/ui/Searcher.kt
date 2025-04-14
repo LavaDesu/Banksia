@@ -52,7 +52,7 @@ fun Searcher(
         },
         label = "padding"
     )
-    var routes by rememberSaveable { mutableStateOf(listOf<Route>()) }
+    var routes by remember { mutableStateOf(listOf<Route>()) }
     Box(modifier = Modifier.fillMaxSize()) {
         LaunchedEffect(Unit) {
             val localRoutes = ptvService.routes()
