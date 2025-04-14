@@ -35,6 +35,7 @@ kotlin {
             implementation(compose.preview)
             implementation(libs.androidx.activity.compose)
             implementation(libs.kotlinx.coroutines.android)
+            implementation(libs.play.services.location)
             implementation(libs.play.services.maps)
             implementation(libs.maps.compose)
         }
@@ -49,6 +50,8 @@ kotlin {
             implementation(libs.androidx.lifecycle.viewmodel)
             implementation(libs.androidx.lifecycle.runtime.compose)
             implementation(libs.kotlinx.coroutines.core)
+            implementation(libs.moko.geo)
+            implementation(libs.moko.geo.compose)
             implementation(projects.shared)
 
         }
@@ -88,4 +91,9 @@ dependencies {
 
 secrets {
     propertiesFileName = "secrets.properties"
+}
+
+compose.resources {
+    publicResClass = true
+    packageOfResClass = "moe.lava.banksia.resources"
 }

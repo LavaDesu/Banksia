@@ -13,6 +13,7 @@ androidx-material = "1.12.0"
 androidx-test-junit = "1.2.1"
 compose-multiplatform = "1.7.3"
 coroutines = "1.9.0"
+geo = "0.8.0"
 junit = "4.13.2"
 kotlin = "2.1.10"
 kotlinxSerializationJson = "1.8.1"
@@ -20,10 +21,13 @@ ktor = "3.1.1"
 logback = "1.5.17"
 mapsCompose = "6.4.1"
 okio = "3.11.0"
+playServicesLocation = "21.3.0"
 playServicesMaps = "19.1.0"
 secretsGradlePlugin = "2.0.1"
 
 [libraries]
+moko-geo = { module = "dev.icerock.moko:geo", version.ref = "geo" }
+moko-geo-compose = { module = "dev.icerock.moko:geo-compose", version.ref = "geo" }
 kotlin-test = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotlin" }
 kotlin-test-junit = { module = "org.jetbrains.kotlin:kotlin-test-junit", version.ref = "kotlin" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }
@@ -50,6 +54,7 @@ ktor-server-tests = { module = "io.ktor:ktor-server-test-host", version.ref = "k
 logback = { module = "ch.qos.logback:logback-classic", version.ref = "logback" }
 maps-compose = { module = "com.google.maps.android:maps-compose", version.ref = "mapsCompose" }
 okio = { module = "com.squareup.okio:okio", version.ref = "okio" }
+play-services-location = { module = "com.google.android.gms:play-services-location", version.ref = "playServicesLocation" }
 play-services-maps = { module = "com.google.android.gms:play-services-maps", version.ref = "playServicesMaps" }
 secrets-gradle-plugin = { module = "com.google.android.libraries.mapsplatform.secrets-gradle-plugin:secrets-gradle-plugin", version.ref = "secretsGradlePlugin" }
 
