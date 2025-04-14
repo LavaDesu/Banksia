@@ -7,8 +7,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.safeContent
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.windowInsetsPadding
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material3.BottomSheetScaffold
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
@@ -26,6 +24,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.unit.dp
 import dev.icerock.moko.geo.compose.BindLocationTrackerEffect
 import dev.icerock.moko.geo.compose.LocationTrackerAccuracy
 import dev.icerock.moko.geo.compose.rememberLocationTrackerFactory
@@ -48,7 +47,7 @@ import kotlin.math.roundToInt
 fun App() {
     val scaffoldState = rememberBottomSheetScaffoldState(
         bottomSheetState = rememberStandardBottomSheetState(
-            initialValue = SheetValue.Hidden,
+            initialValue = SheetValue.PartiallyExpanded,
             skipHiddenState = false
         )
     )
@@ -66,7 +65,8 @@ fun App() {
         sheetState.currentValue != SheetValue.Hidden ||
         sheetState.targetValue != SheetValue.Hidden
     ) {
-        val scaffoldOffset = sheetState.requireOffset().roundToInt()
+        val offset = runCatching { sheetState.requireOffset() }
+        val scaffoldOffset = offset.getOrDefault(0.0f).roundToInt()
         (getScreenHeight() - scaffoldOffset - WindowInsets.safeDrawing.getBottom(LocalDensity.current)).coerceAtLeast(0)
     } else 0
 
@@ -82,6 +82,7 @@ fun App() {
     MaterialTheme {
         BottomSheetScaffold(
             scaffoldState = scaffoldState,
+            sheetPeekHeight = 250.dp,
             modifier = Modifier.fillMaxSize(),
             sheetContent = { Box(modifier = Modifier) },
         ) {
