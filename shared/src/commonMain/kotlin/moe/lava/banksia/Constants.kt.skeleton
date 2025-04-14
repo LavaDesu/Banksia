@@ -1,0 +1,6 @@
+package moe.lava.banksia
+
+object Constants {
+    const val devid: String = ""
+    const val key: String = ""
+}

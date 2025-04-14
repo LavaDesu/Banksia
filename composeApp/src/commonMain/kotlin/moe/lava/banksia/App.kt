@@ -14,6 +14,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import moe.lava.banksia.api.ptv.PtvService
 import moe.lava.banksia.native.maps.Maps
 import moe.lava.banksia.ui.Searcher
 import org.jetbrains.compose.ui.tooling.preview.Preview
@@ -42,10 +43,12 @@ fun App() {
                 sheetState = scaffoldState.bottomSheetState,
             )
             Searcher(
+                ptvService = PtvService(),
                 expanded = searchExpandedState,
                 onExpandedChange = { searchExpandedState = it },
                 text = searchTextState,
                 onTextChange = { searchTextState = it },
+                onRouteChange = {}
             )
         }
     }

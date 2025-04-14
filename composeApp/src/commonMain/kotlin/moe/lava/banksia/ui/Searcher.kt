@@ -12,24 +12,37 @@ import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
+import androidx.compose.material3.ListItem
+import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SearchBar
 import androidx.compose.material3.SearchBarDefaults
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import moe.lava.banksia.api.ptv.PtvService
+import moe.lava.banksia.api.ptv.Route
 
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun Searcher(
+    ptvService: PtvService,
     expanded: Boolean,
     onExpandedChange: (Boolean) -> Unit,
     text: String,
     onTextChange: (String) -> Unit,
+    onRouteChange: (Route) -> Unit,
 ) {
     val animatedPadding by animateDpAsState(
         if (expanded) {
@@ -39,9 +52,17 @@ fun Searcher(
         },
         label = "padding"
     )
+    var routes by rememberSaveable { mutableStateOf(listOf<Route>()) }
     Box(modifier = Modifier.fillMaxSize()) {
         LaunchedEffect(Unit) {
-            /*cache.routes()*/
+            val localRoutes = ptvService.routes()
+            routes = localRoutes.sortedWith(
+                compareBy(
+//                    { it.routeType.ordinal },
+                    { it.routeNumber.toIntOrNull() },
+                    { it.routeName }
+                )
+            )
         }
         SearchBar(
             colors = SearchBarDefaults.colors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
@@ -71,33 +92,31 @@ fun Searcher(
             onExpandedChange = onExpandedChange,
         ) {
             LazyColumn(modifier = Modifier.fillMaxWidth()) {
-                /*val r = cache.sortedRoutes()
-                for ((_, route) in r) {
-                    if (!route.route_number.contains(text) &&
-                        !route.route_name.lowercase().contains(text.lowercase()))
+                for (route in routes) {
+                    if (!route.routeNumber.contains(text) &&
+                        !route.routeName.lowercase().contains(text.lowercase()))
                         continue
                     item {
                         ListItem(
-                            headlineContent = { Text(route.route_number.ifEmpty { route.route_name }) },
+                            headlineContent = { Text(route.routeNumber.ifEmpty { route.routeName }) },
                             supportingContent = {
-                                if (route.route_number.isNotEmpty()) {
-                                    Text(route.route_name)
+                                if (route.routeNumber.isNotEmpty()) {
+                                    Text(route.routeName)
                                 }
                             },
-                            leadingContent = { route.route_type.ComposableIcon() },
+//                            leadingContent = { route.route_type.ComposableIcon() },
                             colors = ListItemDefaults.colors(containerColor = Color.Transparent),
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .padding(horizontal = 16.dp, vertical = 4.dp)
                                 .clickable {
-                                    text = "${route.route_number} - ${route.route_name}"
-
-                                    onRouteChanged(route)
-                                    expanded = false
+                                    onTextChange("${route.routeNumber} - ${route.routeName}")
+                                    onExpandedChange(false)
+                                    onRouteChange(route)
                                 }
                         )
                     }
-                }*/
+                }
             }
         }
     }
