@@ -15,40 +15,14 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import moe.lava.banksia.Constants
+import moe.lava.banksia.api.ptv.structures.Route
 import moe.lava.banksia.log
 import okio.ByteString.Companion.encodeUtf8
 
-// Ordinals used for sorting in searcher
-enum class GtfsSubType(val value: Int) {
-    MetroTrain(2),
-    MetroTram(3),
-    MetroBus(4),
-    RegionalTrain(1),
-    RegionalCoach(5),
-    RegionalBus(6),
-    SkyBus(11),
-    Interstate(10),
+object Responses {
+    @Serializable
+    data class Route(val routes: List<moe.lava.banksia.api.ptv.structures.Route>)
 }
-
-@Serializable
-data class Route(
-    @SerialName("route_type") val routeType: RouteType,
-    @SerialName("route_id") val routeId: Int,
-    @SerialName("route_number") val routeNumber: String,
-    @SerialName("route_name") val routeName: String,
-    @SerialName("route_gtfs_id") val routeGtfsId: String,
-) {
-    fun gtfsSubType(): GtfsSubType? {
-        GtfsSubType.entries.forEach {
-            if (routeGtfsId.startsWith(it.value.toString()))
-                return it
-        }
-        return null
-    }
-}
-
-@Serializable
-data class RouteResponse(val routes: List<Route>)
 
 class PtvService {
     private val client = HttpClient() {
@@ -74,7 +48,7 @@ class PtvService {
     }
 
     suspend fun routes(): List<Route> {
-        val response: RouteResponse = client.get("routes").body()
+        val response: Responses.Route = client.get("routes").body()
         return response.routes
     }
 }

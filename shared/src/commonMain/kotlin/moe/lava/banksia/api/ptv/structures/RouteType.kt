@@ -1,4 +1,4 @@
-package moe.lava.banksia.api.ptv
+package moe.lava.banksia.api.ptv.structures
 
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
@@ -9,7 +9,8 @@ import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
 
 private object RouteTypeSerializer : KSerializer<RouteType> {
-    override val descriptor: SerialDescriptor = PrimitiveSerialDescriptor(RouteType::class.qualifiedName!!,
+    override val descriptor: SerialDescriptor = PrimitiveSerialDescriptor(
+        RouteType::class.qualifiedName!!,
         PrimitiveKind.INT)
 
     override fun serialize(encoder: Encoder, value: RouteType) {
@@ -20,8 +21,6 @@ private object RouteTypeSerializer : KSerializer<RouteType> {
         val index = decoder.decodeInt()
         return RouteType.entries[index]
     }
-
-    override fun toString(): String = "EnumOrdinalSerializer<${descriptor.serialName}>"
 }
 
 @Serializable(with = RouteTypeSerializer::class)

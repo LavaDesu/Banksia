@@ -1,4 +1,4 @@
-package moe.lava.banksia.api.ptv
+package moe.lava.banksia.api.ptv.structures
 
 import androidx.compose.foundation.Image
 import androidx.compose.runtime.Composable
