@@ -30,6 +30,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import moe.lava.banksia.api.ptv.ComposableIcon
 import moe.lava.banksia.api.ptv.PtvService
 import moe.lava.banksia.api.ptv.Route
 
@@ -58,7 +59,7 @@ fun Searcher(
             val localRoutes = ptvService.routes()
             routes = localRoutes.sortedWith(
                 compareBy(
-//                    { it.routeType.ordinal },
+                    { it.gtfsSubType()?.ordinal },
                     { it.routeNumber.toIntOrNull() },
                     { it.routeName }
                 )
@@ -104,7 +105,7 @@ fun Searcher(
                                     Text(route.routeName)
                                 }
                             },
-//                            leadingContent = { route.route_type.ComposableIcon() },
+                            leadingContent = { route.routeType.ComposableIcon() },
                             colors = ListItemDefaults.colors(containerColor = Color.Transparent),
                             modifier = Modifier
                                 .fillMaxWidth()
