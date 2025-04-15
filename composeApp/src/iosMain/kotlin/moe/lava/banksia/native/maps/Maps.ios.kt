@@ -1,12 +1,10 @@
 package moe.lava.banksia.native.maps
 
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.SheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalWindowInfo
-import androidx.compose.ui.unit.Dp
 
 @OptIn(ExperimentalComposeUiApi::class)
 @Composable

@@ -1,11 +1,9 @@
 package moe.lava.banksia.native.maps
 
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.SheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.unit.Dp
 
 data class Marker(val name: String, val onClick: () -> Boolean)
 data class Point(val lat: Double, val lng: Double)
