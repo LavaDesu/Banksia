@@ -16,7 +16,9 @@ import androidx.compose.material3.SheetValue
 import androidx.compose.material3.rememberBottomSheetScaffoldState
 import androidx.compose.material3.rememberStandardBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -31,8 +33,11 @@ import dev.icerock.moko.geo.compose.rememberLocationTrackerFactory
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
 import moe.lava.banksia.api.ptv.PtvService
+import moe.lava.banksia.api.ptv.structures.Route
+import moe.lava.banksia.api.ptv.structures.getProperties
 import moe.lava.banksia.native.maps.Maps
 import moe.lava.banksia.native.maps.Point
+import moe.lava.banksia.native.maps.Polyline
 import moe.lava.banksia.native.maps.getScreenHeight
 import moe.lava.banksia.resources.Res
 import moe.lava.banksia.resources.my_location_24
@@ -41,10 +46,30 @@ import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import kotlin.math.roundToInt
 
+fun buildBounds(points: List<Point>): Pair<Point, Point> {
+    var north = -Double.MAX_VALUE
+    var south = Double.MAX_VALUE
+    var east = -Double.MAX_VALUE
+    var west = Double.MAX_VALUE
+    points.forEach {
+        if (it.lat > north)
+            north = it.lat;
+        if (it.lat < south)
+            south = it.lat;
+        if (it.lng > east)
+            east = it.lng;
+        if (it.lng < west)
+            west = it.lng;
+    }
+    return Pair(Point(north, east), Point(south, west))
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 @Preview
 fun App() {
+    val ptvService = remember { PtvService() }
+
     val scaffoldState = rememberBottomSheetScaffoldState(
         bottomSheetState = rememberStandardBottomSheetState(
             initialValue = SheetValue.PartiallyExpanded,
@@ -56,7 +81,11 @@ fun App() {
     val locationTracker = remember { locationFactory.createLocationTracker() }
     BindLocationTrackerEffect(locationTracker)
     var lastLocation by remember { mutableStateOf(Point(-37.8136, 144.9631)) }
-    var newCameraPosition by remember { mutableStateOf<Point?>(Point(-37.8136, 144.9631)) }
+    var newCameraPosition by remember {
+        mutableStateOf<Pair<Point, Pair<Point, Point>?>?>(
+            Pair(Point(-37.8136, 144.9631), null)
+        )
+    }
     var searchTextState by remember { mutableStateOf("") }
     var searchExpandedState by remember { mutableStateOf(false) }
 
@@ -79,6 +108,36 @@ fun App() {
         }
     }
 
+    var route by remember { mutableStateOf<Route?>(null) }
+    val polylines = remember { mutableStateListOf<Polyline>() }
+
+    LaunchedEffect(route) {
+        val route = route
+        if (route == null)
+            return@LaunchedEffect
+        val geoRoute = ptvService.route(route.routeId, true)
+        val colour = route.routeType.getProperties().colour
+
+        val allPoints = mutableListOf<Point>()
+        polylines.clear()
+        geoRoute.geopath.forEach { pp ->
+            // TODO: use gtfs colours
+            pp.paths.forEach { sp ->
+                val polyline = sp.replace(", ", ",")
+                    .split(" ")
+                    .map { coord ->
+                        val s = coord.split(",")
+                        val point = Point(s[0].toDouble(), s[1].toDouble())
+                        allPoints.add(point)
+                        point
+                    }
+                polylines.add(Polyline(polyline, colour))
+            }
+        }
+        val bounds = buildBounds(allPoints)
+        newCameraPosition = Pair(Point(0.0, 0.0), bounds)
+    }
+
     MaterialTheme {
         BottomSheetScaffold(
             scaffoldState = scaffoldState,
@@ -91,14 +150,15 @@ fun App() {
                 newCameraPosition = newCameraPosition,
                 cameraPositionUpdated = { newCameraPosition = null },
                 extInsets = extInsets,
+                polylines = polylines,
             )
             Searcher(
-                ptvService = PtvService(),
+                ptvService = ptvService,
                 expanded = searchExpandedState,
                 onExpandedChange = { searchExpandedState = it },
                 text = searchTextState,
                 onTextChange = { searchTextState = it },
-                onRouteChange = {}
+                onRouteChange = { route = it }
             )
 
             Box(
@@ -108,7 +168,7 @@ fun App() {
                 FloatingActionButton(
                     containerColor = MaterialTheme.colorScheme.surfaceContainer,
                     onClick = {
-                        newCameraPosition = lastLocation
+                        newCameraPosition = Pair(lastLocation, null)
                     },
                 ) {
                     Icon(painterResource(Res.drawable.my_location_24), "Move to current location")

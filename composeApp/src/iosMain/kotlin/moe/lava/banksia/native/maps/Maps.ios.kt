@@ -18,7 +18,7 @@ actual fun Maps(
     modifier: Modifier,
     markers: List<Marker>,
     polylines: List<Polyline>,
-    newCameraPosition: Point?,
+    newCameraPosition: Pair<Point, Pair<Point, Point>?>?,
     cameraPositionUpdated: () -> Unit,
     extInsets: Int,
 ) {

@@ -18,7 +18,8 @@ expect fun Maps(
     modifier: Modifier = Modifier,
     markers: List<Marker> = listOf(),
     polylines: List<Polyline> = listOf(),
-    newCameraPosition: Point? = Point(-37.8136, 144.9631),
+    // <Centre: Point, Bounds?: <Northeast, Southwest>>
+    newCameraPosition: Pair<Point, Pair<Point, Point>?>? = Pair(Point(-37.8136, 144.9631), null),
     cameraPositionUpdated: () -> Unit,
     extInsets: Int,
 )

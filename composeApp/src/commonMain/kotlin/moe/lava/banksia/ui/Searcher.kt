@@ -108,7 +108,7 @@ fun Searcher(
                                 .fillMaxWidth()
                                 .padding(horizontal = 16.dp, vertical = 4.dp)
                                 .clickable {
-                                    onTextChange("${route.routeNumber} - ${route.routeName}")
+                                    onTextChange(route.getShortFullName())
                                     onExpandedChange(false)
                                     onRouteChange(route)
                                 }

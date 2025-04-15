@@ -18,8 +18,10 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import com.google.android.gms.location.LocationServices
+import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
+import com.google.android.gms.maps.model.LatLngBounds
 import com.google.android.gms.maps.model.MapStyleOptions
 import com.google.maps.android.compose.ComposeMapColorScheme
 import com.google.maps.android.compose.DefaultMapProperties
@@ -50,7 +52,7 @@ actual fun Maps(
     modifier: Modifier,
     markers: List<Marker>,
     polylines: List<Polyline>,
-    newCameraPosition: Point?,
+    newCameraPosition: Pair<Point, Pair<Point, Point>?>?,
     cameraPositionUpdated: () -> Unit,
     extInsets: Int,
 ) {
@@ -65,7 +67,15 @@ actual fun Maps(
     }
     LaunchedEffect(newCameraPosition) {
         if (newCameraPosition != null) {
-            camPos.position = CameraPosition(newCameraPosition.toLatLng(), 16.0f, 0.0f, 0.0f)
+            if (newCameraPosition.second != null) {
+                val (northeast, southwest) = newCameraPosition.second!!
+                val bounds = LatLngBounds(
+                    southwest.toLatLng(),
+                    northeast.toLatLng()
+                )
+                camPos.animate(CameraUpdateFactory.newLatLngBounds(bounds, 150), 1000)
+            } else
+                camPos.animate(CameraUpdateFactory.newLatLngZoom(newCameraPosition.first.toLatLng(), 16.0f), 1000)
             cameraPositionUpdated()
         }
     }

@@ -8,6 +8,7 @@ import io.ktor.client.plugins.defaultRequest
 import io.ktor.client.plugins.plugin
 import io.ktor.client.request.get
 import io.ktor.client.request.parameter
+import io.ktor.http.appendPathSegments
 import io.ktor.serialization.kotlinx.json.json
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
@@ -18,7 +19,9 @@ import okio.ByteString.Companion.encodeUtf8
 
 object Responses {
     @Serializable
-    data class Route(val routes: List<moe.lava.banksia.api.ptv.structures.Route>)
+    data class Route(val route: moe.lava.banksia.api.ptv.structures.Route)
+    @Serializable
+    data class Routes(val routes: List<moe.lava.banksia.api.ptv.structures.Route>)
 }
 
 class PtvService {
@@ -44,8 +47,18 @@ class PtvService {
         }
     }
 
+    suspend fun route(id: Int, includeGeopath: Boolean = false): Route {
+        val response: Responses.Route = client.get("routes") {
+            url {
+                appendPathSegments(id.toString())
+                parameters.append("include_geopath", if (includeGeopath) "true" else "false")
+            }
+        }.body()
+        return response.route
+    }
+
     suspend fun routes(): List<Route> {
-        val response: Responses.Route = client.get("routes").body()
+        val response: Responses.Routes = client.get("routes").body()
         return response.routes
     }
 }
