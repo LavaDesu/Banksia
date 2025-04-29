@@ -147,8 +147,8 @@ fun App() {
                 polylines.add(Polyline(polyline, colour))
             }
         }
-        val bounds = buildBounds(allPoints)
-        newCameraPosition = Pair(Point(0.0, 0.0), bounds)
+        if (allPoints.isNotEmpty())
+            newCameraPosition = Pair(Point(0.0, 0.0), buildBounds(allPoints))
     }
 
     var sheetSwipeEnabled by remember { mutableStateOf(true) }
