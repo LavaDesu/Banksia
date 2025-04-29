@@ -4,9 +4,12 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.add
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeContent
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.material3.BottomSheetDefaults
 import androidx.compose.material3.BottomSheetScaffold
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
@@ -28,6 +31,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.backhandler.PredictiveBackHandler
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
 import dev.icerock.moko.geo.compose.BindLocationTrackerEffect
@@ -49,6 +53,7 @@ import moe.lava.banksia.native.maps.getScreenHeight
 import moe.lava.banksia.resources.Res
 import moe.lava.banksia.resources.my_location_24
 import moe.lava.banksia.ui.Searcher
+import moe.lava.banksia.ui.StopInfoPanel
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import kotlin.coroutines.cancellation.CancellationException
@@ -147,18 +152,44 @@ fun App() {
     }
 
     var sheetSwipeEnabled by remember { mutableStateOf(true) }
-    var peekHeight by remember { mutableStateOf(128.dp) }
+    var handleHeight by remember { mutableStateOf(0.dp) }
+    var peekHeight by remember { mutableStateOf(0.dp) }
     var peekHeightMultiplier by remember { mutableFloatStateOf(1F) }
 
+    var stop by remember { mutableStateOf<PtvStop?>(null) }
     var markers by remember { mutableStateOf(listOf<Marker>()) }
-    LaunchedEffect(route) { route?.let { markers = buildStops(ptvService, it) {} } }
+    LaunchedEffect(route) {
+        route?.let { route ->
+            markers = buildStops(ptvService, route) {
+                stop = it
+                scope.launch { scaffoldState.bottomSheetState.partialExpand() }
+            }
+        }
+    }
 
     BanksiaTheme {
         BottomSheetScaffold(
             scaffoldState = scaffoldState,
-            sheetPeekHeight = peekHeight * peekHeightMultiplier,
+            sheetPeekHeight = (handleHeight + peekHeight) * peekHeightMultiplier,
             modifier = Modifier.fillMaxSize(),
-            sheetContent = { Box(modifier = Modifier) },
+            sheetContent = { stop?.let {
+                StopInfoPanel(ptvService, it) {
+                    peekHeight = it
+                }
+            } },
+            sheetDragHandle = {
+                val density = LocalDensity.current
+                Box(
+                    Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 10.dp)
+                        .onSizeChanged {
+                            handleHeight = with(density) { it.height.toDp() }
+                        }
+                ) {
+                    BottomSheetDefaults.DragHandle(modifier = Modifier.align(Alignment.Center))
+                }
+            },
             sheetSwipeEnabled = sheetSwipeEnabled,
         ) {
             Maps(
