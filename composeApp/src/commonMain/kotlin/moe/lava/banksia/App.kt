@@ -264,12 +264,7 @@ suspend fun buildStops(
         if (stop.stopLatitude != null && stop.stopLongitude != null) {
             val pos = Point(stop.stopLatitude!!, stop.stopLongitude!!)
 
-            var name = stop.stopName;
-            if (name.endsWith(" Station"))
-                name = name.replace(" Station", "")
-
             val marker = Marker(
-                name = name,
                 point = pos,
                 type = MarkerType.GENERIC_STOP,
                 colour = colour,

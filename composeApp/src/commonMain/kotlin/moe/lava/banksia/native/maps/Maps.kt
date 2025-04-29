@@ -11,7 +11,6 @@ enum class MarkerType {
 }
 data class Marker(
     val point: Point,
-    val name: String,
     val type: MarkerType,
     val colour: Color,
     val onClick: () -> Boolean

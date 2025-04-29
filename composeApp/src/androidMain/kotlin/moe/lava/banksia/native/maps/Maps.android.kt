@@ -112,7 +112,6 @@ actual fun Maps(
             MarkerComposable(
                 keys = arrayOf(marker.colour),
                 state = state,
-                title = marker.name,
                 onClick = { marker.onClick() }
             ) {
                 Box(
