@@ -37,9 +37,12 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
 import moe.lava.banksia.api.ptv.PtvService
 import moe.lava.banksia.api.ptv.structures.PtvRoute
+import moe.lava.banksia.api.ptv.structures.PtvStop
 import moe.lava.banksia.api.ptv.structures.getProperties
 import moe.lava.banksia.native.BanksiaTheme
 import moe.lava.banksia.native.maps.Maps
+import moe.lava.banksia.native.maps.Marker
+import moe.lava.banksia.native.maps.MarkerType
 import moe.lava.banksia.native.maps.Point
 import moe.lava.banksia.native.maps.Polyline
 import moe.lava.banksia.native.maps.getScreenHeight
@@ -147,6 +150,9 @@ fun App() {
     var peekHeight by remember { mutableStateOf(128.dp) }
     var peekHeightMultiplier by remember { mutableFloatStateOf(1F) }
 
+    var markers by remember { mutableStateOf(listOf<Marker>()) }
+    LaunchedEffect(route) { route?.let { markers = buildStops(ptvService, it) {} } }
+
     BanksiaTheme {
         BottomSheetScaffold(
             scaffoldState = scaffoldState,
@@ -160,6 +166,7 @@ fun App() {
                 newCameraPosition = newCameraPosition,
                 cameraPositionUpdated = { newCameraPosition = null },
                 extInsets = WindowInsets(top = with(LocalDensity.current) { 56.dp.roundToPx() }, bottom = extInsets),
+                markers = markers,
                 polylines = polylines,
             )
             Searcher(
@@ -207,4 +214,38 @@ fun App() {
             }
         }
     }
+}
+
+suspend fun buildStops(
+    ptvService: PtvService,
+    route: PtvRoute,
+    launchInfoPanel: (PtvStop) -> Unit,
+): List<Marker> {
+    var stops = ptvService.stopsByRoute(route.routeId, route.routeType)
+    var res = mutableListOf<Marker>()
+    val colour = route.routeType.getProperties().colour
+
+    for (stop in stops) {
+        if (stop.stopLatitude != null && stop.stopLongitude != null) {
+            val pos = Point(stop.stopLatitude!!, stop.stopLongitude!!)
+
+            var name = stop.stopName;
+            if (name.endsWith(" Station"))
+                name = name.replace(" Station", "")
+
+            val marker = Marker(
+                name = name,
+                point = pos,
+                type = MarkerType.GENERIC_STOP,
+                colour = colour,
+                onClick = {
+                    launchInfoPanel(stop)
+                    false
+                }
+            )
+            res.add(marker)
+        }
+    }
+
+    return res
 }

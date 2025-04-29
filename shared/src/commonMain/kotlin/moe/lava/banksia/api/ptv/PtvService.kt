@@ -14,6 +14,8 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import moe.lava.banksia.Constants
 import moe.lava.banksia.api.ptv.structures.PtvRoute
+import moe.lava.banksia.api.ptv.structures.PtvRouteType
+import moe.lava.banksia.api.ptv.structures.PtvStop
 import moe.lava.banksia.log
 import okio.ByteString.Companion.encodeUtf8
 
@@ -22,6 +24,9 @@ object Responses {
     data class PtvRouteResponse(val route: PtvRoute)
     @Serializable
     data class PtvRoutesResponse(val routes: List<PtvRoute>)
+
+    @Serializable
+    data class PtvStopsResponse(val stops: List<PtvStop>)
 }
 
 class PtvService {
@@ -60,5 +65,18 @@ class PtvService {
     suspend fun routes(): List<PtvRoute> {
         val response: Responses.PtvRoutesResponse = client.get("routes").body()
         return response.routes
+    }
+
+    suspend fun stopsByRoute(routeId: Int, routeType: PtvRouteType): List<PtvStop> {
+        val response: Responses.PtvStopsResponse = client.get("stops/route") {
+            url {
+                appendPathSegments(
+                    routeId.toString(),
+                    "route_type",
+                    routeType.ordinal.toString()
+                )
+            }
+        }.body()
+        return response.stops
     }
 }

@@ -2,17 +2,23 @@ package moe.lava.banksia.native.maps
 
 import android.Manifest
 import android.content.pm.PackageManager
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.add
 import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.safeDrawing
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
@@ -28,10 +34,12 @@ import com.google.maps.android.compose.ComposeMapColorScheme
 import com.google.maps.android.compose.DefaultMapProperties
 import com.google.maps.android.compose.DefaultMapUiSettings
 import com.google.maps.android.compose.GoogleMap
+import com.google.maps.android.compose.MarkerComposable
 import com.google.maps.android.compose.Polyline
 import com.google.maps.android.compose.rememberCameraPositionState
+import com.google.maps.android.compose.rememberMarkerState
 import moe.lava.banksia.R
-
+import moe.lava.banksia.native.BanksiaTheme
 
 fun Point.toLatLng(): LatLng = LatLng(this.lat, this.lng)
 
@@ -97,11 +105,24 @@ actual fun Maps(
         ),
         contentPadding = WindowInsets.safeDrawing.add(extInsets).asPaddingValues()
     ) {
+        // [TODO]: Slight lag when routes with many stops such as the 901 bus is set
         for (marker in markers) {
-            Marker(
-                name = marker.name,
-                onClick = marker.onClick
-            )
+            val state = rememberMarkerState()
+            state.position = marker.point.toLatLng()
+            MarkerComposable(
+                keys = arrayOf(marker.colour),
+                state = state,
+                title = marker.name,
+                onClick = { marker.onClick() }
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(12.dp)
+                        .clip(CircleShape)
+                        .background(BanksiaTheme.colors.surface)
+                        .border(2.dp, marker.colour, CircleShape)
+                )
+            }
         }
         for (polyline in polylines) {
             Polyline(

@@ -6,7 +6,16 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 
-data class Marker(val name: String, val onClick: () -> Boolean)
+enum class MarkerType {
+    GENERIC_STOP,
+}
+data class Marker(
+    val point: Point,
+    val name: String,
+    val type: MarkerType,
+    val colour: Color,
+    val onClick: () -> Boolean
+)
 data class Point(val lat: Double, val lng: Double)
 data class Polyline(val points: List<Point>, val colour: Color)
 
