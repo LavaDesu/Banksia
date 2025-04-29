@@ -19,9 +19,9 @@ import okio.ByteString.Companion.encodeUtf8
 
 object Responses {
     @Serializable
-    data class Route(val route: moe.lava.banksia.api.ptv.structures.PtvRoute)
+    data class PtvRouteResponse(val route: PtvRoute)
     @Serializable
-    data class Routes(val routes: List<moe.lava.banksia.api.ptv.structures.PtvRoute>)
+    data class PtvRoutesResponse(val routes: List<PtvRoute>)
 }
 
 class PtvService {
@@ -48,7 +48,7 @@ class PtvService {
     }
 
     suspend fun route(id: Int, includeGeopath: Boolean = false): PtvRoute {
-        val response: Responses.Route = client.get("routes") {
+        val response: Responses.PtvRouteResponse = client.get("routes") {
             url {
                 appendPathSegments(id.toString())
                 parameters.append("include_geopath", if (includeGeopath) "true" else "false")
@@ -58,7 +58,7 @@ class PtvService {
     }
 
     suspend fun routes(): List<PtvRoute> {
-        val response: Responses.Routes = client.get("routes").body()
+        val response: Responses.PtvRoutesResponse = client.get("routes").body()
         return response.routes
     }
 }
