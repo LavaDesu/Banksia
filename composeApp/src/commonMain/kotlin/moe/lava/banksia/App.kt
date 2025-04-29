@@ -38,6 +38,7 @@ import kotlinx.coroutines.launch
 import moe.lava.banksia.api.ptv.PtvService
 import moe.lava.banksia.api.ptv.structures.Route
 import moe.lava.banksia.api.ptv.structures.getProperties
+import moe.lava.banksia.native.BanksiaTheme
 import moe.lava.banksia.native.maps.Maps
 import moe.lava.banksia.native.maps.Point
 import moe.lava.banksia.native.maps.Polyline
@@ -146,7 +147,7 @@ fun App() {
     var peekHeight by remember { mutableStateOf(128.dp) }
     var peekHeightMultiplier by remember { mutableFloatStateOf(1F) }
 
-    MaterialTheme {
+    BanksiaTheme {
         BottomSheetScaffold(
             scaffoldState = scaffoldState,
             sheetPeekHeight = peekHeight * peekHeightMultiplier,

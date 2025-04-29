@@ -2,6 +2,7 @@ package moe.lava.banksia.native.maps
 
 import android.Manifest
 import android.content.pm.PackageManager
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.add
 import androidx.compose.foundation.layout.asPaddingValues
@@ -83,7 +84,8 @@ actual fun Maps(
     GoogleMap(
         modifier = Modifier.fillMaxSize(),
         cameraPositionState = camPos,
-        mapColorScheme = ComposeMapColorScheme.FOLLOW_SYSTEM,
+        mapColorScheme = if (isSystemInDarkTheme()) { ComposeMapColorScheme.DARK } else {
+            ComposeMapColorScheme.LIGHT },
         properties = DefaultMapProperties.copy(
             mapStyleOptions = MapStyleOptions.loadRawResourceStyle(LocalContext.current, R.raw.def_mapstyle),
             isMyLocationEnabled = checkLocationPermission(),
