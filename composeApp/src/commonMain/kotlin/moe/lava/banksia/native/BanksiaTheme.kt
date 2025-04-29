@@ -1,12 +1,27 @@
 package moe.lava.banksia.native
 
 import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.material3.ColorScheme
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 
 @Composable
-expect fun BanksiaTheme(
+fun BanksiaTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
-    // Dynamic color is available on Android 12+
     dynamicColor: Boolean = true,
-    content: @Composable () -> Unit
-)
+    content: @Composable (() -> Unit)
+) {
+    MaterialTheme(
+        colorScheme = BanksiaTheme.colors(darkTheme, dynamicColor),
+        content = content
+    )
+}
+
+@Composable
+expect fun BanksiaTheme.colors(darkTheme: Boolean, dynamicColor: Boolean): ColorScheme
+
+object BanksiaTheme {
+    val colors: ColorScheme
+        @Composable
+        get() = colors(isSystemInDarkTheme(), true)
+}
