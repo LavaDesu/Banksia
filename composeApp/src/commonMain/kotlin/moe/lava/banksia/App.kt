@@ -18,13 +18,16 @@ import androidx.compose.material3.rememberStandardBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.backhandler.PredictiveBackHandler
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
 import dev.icerock.moko.geo.compose.BindLocationTrackerEffect
@@ -44,6 +47,7 @@ import moe.lava.banksia.resources.my_location_24
 import moe.lava.banksia.ui.Searcher
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
+import kotlin.coroutines.cancellation.CancellationException
 import kotlin.math.roundToInt
 
 fun buildBounds(points: List<Point>): Pair<Point, Point> {
@@ -64,7 +68,7 @@ fun buildBounds(points: List<Point>): Pair<Point, Point> {
     return Pair(Point(north, east), Point(south, west))
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalComposeUiApi::class)
 @Composable
 @Preview
 fun App() {
@@ -138,12 +142,17 @@ fun App() {
         newCameraPosition = Pair(Point(0.0, 0.0), bounds)
     }
 
+    var sheetSwipeEnabled by remember { mutableStateOf(true) }
+    var peekHeight by remember { mutableStateOf(128.dp) }
+    var peekHeightMultiplier by remember { mutableFloatStateOf(1F) }
+
     MaterialTheme {
         BottomSheetScaffold(
             scaffoldState = scaffoldState,
-            sheetPeekHeight = 250.dp,
+            sheetPeekHeight = peekHeight * peekHeightMultiplier,
             modifier = Modifier.fillMaxSize(),
             sheetContent = { Box(modifier = Modifier) },
+            sheetSwipeEnabled = sheetSwipeEnabled,
         ) {
             Maps(
                 modifier = Modifier.fillMaxSize(),
@@ -160,6 +169,27 @@ fun App() {
                 onTextChange = { searchTextState = it },
                 onRouteChange = { route = it }
             )
+
+            PredictiveBackHandler(scaffoldState.bottomSheetState.currentValue != SheetValue.Hidden) { progress ->
+                sheetSwipeEnabled = false
+                try {
+                    progress.collect { backEvent ->
+                        if (scaffoldState.bottomSheetState.currentValue == SheetValue.PartiallyExpanded) {
+                            peekHeightMultiplier = 1F - backEvent.progress
+                        }
+                    }
+                    if (scaffoldState.bottomSheetState.currentValue == SheetValue.Expanded)
+                        scope.launch { scaffoldState.bottomSheetState.partialExpand() }
+                    else if (scaffoldState.bottomSheetState.currentValue == SheetValue.PartiallyExpanded)
+                        scope.launch {
+                            scaffoldState.bottomSheetState.hide()
+                            peekHeightMultiplier = 1F
+                        }
+                } catch (_: CancellationException) {
+                    peekHeightMultiplier = 1F
+                }
+                sheetSwipeEnabled = true
+            }
 
             Box(
                 Modifier.windowInsetsPadding(WindowInsets.safeContent.add(WindowInsets(bottom = extInsets))),

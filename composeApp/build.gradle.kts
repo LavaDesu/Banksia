@@ -52,6 +52,7 @@ kotlin {
             implementation(libs.moko.geo)
             implementation(libs.moko.geo.compose)
             implementation(projects.shared)
+            implementation(libs.ui.backhandler)
 
         }
     }
