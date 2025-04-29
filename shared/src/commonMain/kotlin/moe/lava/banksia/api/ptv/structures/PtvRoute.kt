@@ -16,14 +16,6 @@ enum class GtfsSubType(val value: Int) {
 }
 
 @Serializable
-data class PtvGeopath(
-    @SerialName("direction_id") val directionId: Int,
-    @SerialName("valid_from") val validFrom: String,
-    @SerialName("valid_to") val validTo: String,
-    @SerialName("paths") val paths: List<String>,
-)
-
-@Serializable
 data class PtvRoute(
     @SerialName("route_type") val routeType: PtvRouteType,
     @SerialName("route_id") val routeId: Int,
@@ -48,4 +40,3 @@ data class PtvRoute(
         return res
     }
 }
-
