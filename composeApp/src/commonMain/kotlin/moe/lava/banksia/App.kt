@@ -158,7 +158,7 @@ fun App() {
                 modifier = Modifier.fillMaxSize(),
                 newCameraPosition = newCameraPosition,
                 cameraPositionUpdated = { newCameraPosition = null },
-                extInsets = extInsets,
+                extInsets = WindowInsets(top = with(LocalDensity.current) { 56.dp.roundToPx() }, bottom = extInsets),
                 polylines = polylines,
             )
             Searcher(

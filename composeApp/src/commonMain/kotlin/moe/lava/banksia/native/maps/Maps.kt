@@ -1,5 +1,6 @@
 package moe.lava.banksia.native.maps
 
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -21,5 +22,5 @@ expect fun Maps(
     // <Centre: Point, Bounds?: <Northeast, Southwest>>
     newCameraPosition: Pair<Point, Pair<Point, Point>?>? = Pair(Point(-37.8136, 144.9631), null),
     cameraPositionUpdated: () -> Unit,
-    extInsets: Int,
+    extInsets: WindowInsets,
 )

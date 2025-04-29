@@ -1,5 +1,6 @@
 package moe.lava.banksia.native.maps
 
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.ExperimentalComposeUiApi
@@ -20,7 +21,7 @@ actual fun Maps(
     polylines: List<Polyline>,
     newCameraPosition: Pair<Point, Pair<Point, Point>?>?,
     cameraPositionUpdated: () -> Unit,
-    extInsets: Int,
+    extInsets: WindowInsets,
 ) {
     TODO("Not yet implemented")
 }

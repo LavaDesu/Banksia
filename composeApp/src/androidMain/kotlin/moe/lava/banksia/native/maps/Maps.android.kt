@@ -54,7 +54,7 @@ actual fun Maps(
     polylines: List<Polyline>,
     newCameraPosition: Pair<Point, Pair<Point, Point>?>?,
     cameraPositionUpdated: () -> Unit,
-    extInsets: Int,
+    extInsets: WindowInsets,
 ) {
     var camPos = rememberCameraPositionState()
     val ctx = LocalContext.current
@@ -93,7 +93,7 @@ actual fun Maps(
             myLocationButtonEnabled = false,
             mapToolbarEnabled = false,
         ),
-        contentPadding = WindowInsets.safeDrawing.add(WindowInsets(bottom = extInsets)).asPaddingValues()
+        contentPadding = WindowInsets.safeDrawing.add(extInsets).asPaddingValues()
     ) {
         for (marker in markers) {
             Marker(
