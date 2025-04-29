@@ -172,7 +172,11 @@ fun App() {
             Searcher(
                 ptvService = ptvService,
                 expanded = searchExpandedState,
-                onExpandedChange = { searchExpandedState = it },
+                onExpandedChange = {
+                    searchExpandedState = it
+                    if (it)
+                        scope.launch { scaffoldState.bottomSheetState.hide() }
+                },
                 text = searchTextState,
                 onTextChange = { searchTextState = it },
                 onRouteChange = { route = it }
