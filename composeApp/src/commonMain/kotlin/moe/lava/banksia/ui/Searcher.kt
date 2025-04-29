@@ -30,7 +30,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import moe.lava.banksia.api.ptv.PtvService
 import moe.lava.banksia.api.ptv.structures.ComposableIcon
-import moe.lava.banksia.api.ptv.structures.Route
+import moe.lava.banksia.api.ptv.structures.PtvRoute
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -40,7 +40,7 @@ fun Searcher(
     onExpandedChange: (Boolean) -> Unit,
     text: String,
     onTextChange: (String) -> Unit,
-    onRouteChange: (Route) -> Unit,
+    onRouteChange: (PtvRoute) -> Unit,
 ) {
     val animatedPadding by animateDpAsState(
         if (expanded) {
@@ -50,7 +50,7 @@ fun Searcher(
         },
         label = "padding"
     )
-    var routes by remember { mutableStateOf(listOf<Route>()) }
+    var routes by remember { mutableStateOf(listOf<PtvRoute>()) }
     Box(modifier = Modifier.fillMaxSize()) {
         LaunchedEffect(Unit) {
             val localRoutes = ptvService.routes()

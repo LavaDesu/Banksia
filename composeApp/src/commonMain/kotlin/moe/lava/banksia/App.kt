@@ -36,7 +36,7 @@ import dev.icerock.moko.geo.compose.rememberLocationTrackerFactory
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
 import moe.lava.banksia.api.ptv.PtvService
-import moe.lava.banksia.api.ptv.structures.Route
+import moe.lava.banksia.api.ptv.structures.PtvRoute
 import moe.lava.banksia.api.ptv.structures.getProperties
 import moe.lava.banksia.native.BanksiaTheme
 import moe.lava.banksia.native.maps.Maps
@@ -113,7 +113,7 @@ fun App() {
         }
     }
 
-    var route by remember { mutableStateOf<Route?>(null) }
+    var route by remember { mutableStateOf<PtvRoute?>(null) }
     val polylines = remember { mutableStateListOf<Polyline>() }
 
     LaunchedEffect(route) {

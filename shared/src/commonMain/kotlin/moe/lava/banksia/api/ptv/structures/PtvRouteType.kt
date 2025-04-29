@@ -8,23 +8,23 @@ import kotlinx.serialization.descriptors.SerialDescriptor
 import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
 
-private object RouteTypeSerializer : KSerializer<RouteType> {
+private object PtvRouteTypeSerialiser : KSerializer<PtvRouteType> {
     override val descriptor: SerialDescriptor = PrimitiveSerialDescriptor(
-        RouteType::class.qualifiedName!!,
+        PtvRouteType::class.qualifiedName!!,
         PrimitiveKind.INT)
 
-    override fun serialize(encoder: Encoder, value: RouteType) {
+    override fun serialize(encoder: Encoder, value: PtvRouteType) {
         encoder.encodeInt(value.ordinal)
     }
 
-    override fun deserialize(decoder: Decoder): RouteType {
+    override fun deserialize(decoder: Decoder): PtvRouteType {
         val index = decoder.decodeInt()
-        return RouteType.entries[index]
+        return PtvRouteType.entries[index]
     }
 }
 
-@Serializable(with = RouteTypeSerializer::class)
-enum class RouteType {
+@Serializable(with = PtvRouteTypeSerialiser::class)
+enum class PtvRouteType {
     TRAIN,
     TRAM,
     BUS,

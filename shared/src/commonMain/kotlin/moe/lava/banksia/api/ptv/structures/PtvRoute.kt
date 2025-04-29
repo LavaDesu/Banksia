@@ -16,7 +16,7 @@ enum class GtfsSubType(val value: Int) {
 }
 
 @Serializable
-data class Geopath(
+data class PtvGeopath(
     @SerialName("direction_id") val directionId: Int,
     @SerialName("valid_from") val validFrom: String,
     @SerialName("valid_to") val validTo: String,
@@ -24,13 +24,13 @@ data class Geopath(
 )
 
 @Serializable
-data class Route(
-    @SerialName("route_type") val routeType: RouteType,
+data class PtvRoute(
+    @SerialName("route_type") val routeType: PtvRouteType,
     @SerialName("route_id") val routeId: Int,
     @SerialName("route_number") val routeNumber: String,
     @SerialName("route_name") val routeName: String,
     @SerialName("route_gtfs_id") val routeGtfsId: String,
-    @SerialName("geopath") val geopath: List<Geopath>,
+    @SerialName("geopath") val geopath: List<PtvGeopath>,
 ) {
     fun gtfsSubType(): GtfsSubType? {
         GtfsSubType.entries.forEach {

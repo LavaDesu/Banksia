@@ -25,25 +25,25 @@ data class RouteTypeProperties(
     val background: DrawableResource,
     val icon: DrawableResource,
 )
-fun RouteType.getProperties(): RouteTypeProperties {
+fun PtvRouteType.getProperties(): RouteTypeProperties {
     val colour = when (this) {
-        RouteType.TRAIN -> Color(0xFF0072CE)
-        RouteType.TRAM -> Color(0xFF78BE20)
-        RouteType.BUS, RouteType.NIGHT_BUS -> Color(0xFFFF8200)
-        RouteType.VLINE -> Color(0xFF8F1A95)
+        PtvRouteType.TRAIN -> Color(0xFF0072CE)
+        PtvRouteType.TRAM -> Color(0xFF78BE20)
+        PtvRouteType.BUS, PtvRouteType.NIGHT_BUS -> Color(0xFFFF8200)
+        PtvRouteType.VLINE -> Color(0xFF8F1A95)
     }
     val (drawable, background, icon) = when (this) {
-        RouteType.TRAM -> Triple(
+        PtvRouteType.TRAM -> Triple(
             Res.drawable.tram, Res.drawable.tram_background, Res.drawable.tram_icon)
-        RouteType.TRAIN, RouteType.VLINE -> Triple(
+        PtvRouteType.TRAIN, PtvRouteType.VLINE -> Triple(
             Res.drawable.train, Res.drawable.train_background, Res.drawable.train_icon)
-        RouteType.BUS, RouteType.NIGHT_BUS -> Triple(
+        PtvRouteType.BUS, PtvRouteType.NIGHT_BUS -> Triple(
             Res.drawable.bus, Res.drawable.bus_background, Res.drawable.bus_icon)
     }
     return RouteTypeProperties(colour, drawable, background, icon)
 }
 @Composable
-fun RouteType.ComposableIcon() {
+fun PtvRouteType.ComposableIcon() {
     val properties = this.getProperties()
     Image(
         painter = painterResource(properties.icon),

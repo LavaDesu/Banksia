@@ -13,15 +13,15 @@ import io.ktor.serialization.kotlinx.json.json
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import moe.lava.banksia.Constants
-import moe.lava.banksia.api.ptv.structures.Route
+import moe.lava.banksia.api.ptv.structures.PtvRoute
 import moe.lava.banksia.log
 import okio.ByteString.Companion.encodeUtf8
 
 object Responses {
     @Serializable
-    data class Route(val route: moe.lava.banksia.api.ptv.structures.Route)
+    data class Route(val route: moe.lava.banksia.api.ptv.structures.PtvRoute)
     @Serializable
-    data class Routes(val routes: List<moe.lava.banksia.api.ptv.structures.Route>)
+    data class Routes(val routes: List<moe.lava.banksia.api.ptv.structures.PtvRoute>)
 }
 
 class PtvService {
@@ -47,7 +47,7 @@ class PtvService {
         }
     }
 
-    suspend fun route(id: Int, includeGeopath: Boolean = false): Route {
+    suspend fun route(id: Int, includeGeopath: Boolean = false): PtvRoute {
         val response: Responses.Route = client.get("routes") {
             url {
                 appendPathSegments(id.toString())
@@ -57,7 +57,7 @@ class PtvService {
         return response.route
     }
 
-    suspend fun routes(): List<Route> {
+    suspend fun routes(): List<PtvRoute> {
         val response: Responses.Routes = client.get("routes").body()
         return response.routes
     }
