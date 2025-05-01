@@ -15,6 +15,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.SearchBarDefaults
 import androidx.compose.material3.SheetValue
 import androidx.compose.material3.rememberBottomSheetScaffoldState
 import androidx.compose.material3.rememberStandardBottomSheetState
@@ -126,13 +127,13 @@ fun App() {
 
     LaunchedEffect(route) {
         val route = route
+        polylines.clear()
         if (route == null)
             return@LaunchedEffect
         val geoRoute = ptvService.route(route.routeId, true)
         val colour = route.routeType.getProperties().colour
 
         val allPoints = mutableListOf<Point>()
-        polylines.clear()
         geoRoute.geopath.forEach { pp ->
             // TODO: use gtfs colours
             pp.paths.forEach { sp ->
@@ -159,6 +160,7 @@ fun App() {
     var stop by remember { mutableStateOf<PtvStop?>(null) }
     var markers by remember { mutableStateOf(listOf<Marker>()) }
     LaunchedEffect(route) {
+        markers = listOf()
         route?.let { route ->
             markers = buildStops(ptvService, route) {
                 stop = it
@@ -196,7 +198,9 @@ fun App() {
                 modifier = Modifier.fillMaxSize(),
                 newCameraPosition = newCameraPosition,
                 cameraPositionUpdated = { newCameraPosition = null },
-                extInsets = WindowInsets(top = with(LocalDensity.current) { 56.dp.roundToPx() }, bottom = extInsets),
+                extInsets = WindowInsets(top = with(LocalDensity.current) {
+                    SearchBarDefaults.InputFieldHeight.roundToPx()
+                }, bottom = extInsets),
                 markers = markers,
                 polylines = polylines,
             )
@@ -208,6 +212,7 @@ fun App() {
                     if (it)
                         scope.launch { scaffoldState.bottomSheetState.hide() }
                 },
+                route = route,
                 text = searchTextState,
                 onTextChange = { searchTextState = it },
                 onRouteChange = { route = it }
