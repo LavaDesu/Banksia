@@ -87,7 +87,7 @@ fun Searcher(
             inputField = {
                 var backProgress by remember { mutableFloatStateOf(1f) }
                 var backEdgeIsLeft by remember { mutableStateOf<Boolean?>(null) }
-                val boxOpacityState by animateFloatAsState((1f - backProgress).pow(3))
+                val routeInfoOpacity by animateFloatAsState((1f - backProgress).pow(3))
                 val slideState by animateDpAsState((50 * backProgress).dp)
                 val slidePadding = if (backEdgeIsLeft == true)
                     PaddingValues(start = slideState)
@@ -112,7 +112,7 @@ fun Searcher(
                 SearchBarDefaults.InputField(
                     enabled = route == null,
                     modifier = Modifier
-                        .alpha(1f - boxOpacityState)
+                        .alpha(1f - routeInfoOpacity)
                         .padding(horizontal = 20.dp - animatedPadding),
                     query = text,
                     onQueryChange = onTextChange,
@@ -132,42 +132,8 @@ fun Searcher(
                 LaunchedEffect(route) {
                     backProgress = if (route != null) 0f else 1f;
                 }
-                if (route != null) {
-                    Box(
-                        modifier = Modifier
-                            .alpha(boxOpacityState)
-                            .sizeIn(
-                                minHeight = SearchBarDefaults.InputFieldHeight,
-                                maxHeight = SearchBarDefaults.InputFieldHeight,
-                            )
-                            .fillMaxWidth()
-                            .padding(slidePadding)
-                    ) {
-                        IconButton(
-                            modifier = Modifier.align(Alignment.CenterStart),
-                            onClick = {
-                                onRouteChange(null)
-                            }
-                        ) {
-                            Icon(Icons.AutoMirrored.Filled.ArrowBack, "Clear route")
-                        }
-                        Row(
-                            modifier = Modifier
-                                .padding(horizontal = 50.dp)
-                                .align(Alignment.Center),
-                            verticalAlignment = Alignment.CenterVertically,
-                        ) {
-                            route.routeType.ComposableIcon()
-                            Spacer(Modifier.width(15.dp))
-                            Text(
-                                route.routeNumber.ifEmpty { route.routeName },
-                                style = MaterialTheme.typography.headlineSmall,
-                                overflow = TextOverflow.Ellipsis,
-                                maxLines = 1,
-                            )
-                        }
-                    }
-                }
+                if (route != null)
+                    RouteInfo(routeInfoOpacity, slidePadding, onRouteChange, route)
             },
             expanded = expanded,
             onExpandedChange = onExpandedChange,
@@ -199,6 +165,50 @@ fun Searcher(
                     }
                 }
             }
+        }
+    }
+}
+
+@Composable
+@OptIn(ExperimentalMaterial3Api::class)
+private fun RouteInfo(
+    routeInfoOpacity: Float,
+    slidePadding: PaddingValues,
+    onRouteChange: (PtvRoute?) -> Unit,
+    route: PtvRoute
+) {
+    Box(
+        modifier = Modifier
+            .alpha(routeInfoOpacity)
+            .sizeIn(
+                minHeight = SearchBarDefaults.InputFieldHeight,
+                maxHeight = SearchBarDefaults.InputFieldHeight,
+            )
+            .fillMaxWidth()
+            .padding(slidePadding)
+    ) {
+        IconButton(
+            modifier = Modifier.align(Alignment.CenterStart),
+            onClick = {
+                onRouteChange(null)
+            }
+        ) {
+            Icon(Icons.AutoMirrored.Filled.ArrowBack, "Clear route")
+        }
+        Row(
+            modifier = Modifier
+                .padding(horizontal = 50.dp)
+                .align(Alignment.Center),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            route.routeType.ComposableIcon()
+            Spacer(Modifier.width(15.dp))
+            Text(
+                route.routeNumber.ifEmpty { route.routeName },
+                style = MaterialTheme.typography.headlineSmall,
+                overflow = TextOverflow.Ellipsis,
+                maxLines = 1,
+            )
         }
     }
 }
