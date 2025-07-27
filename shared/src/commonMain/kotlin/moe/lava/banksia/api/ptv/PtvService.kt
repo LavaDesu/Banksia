@@ -20,6 +20,7 @@ import moe.lava.banksia.api.ptv.structures.PtvRouteType
 import moe.lava.banksia.api.ptv.structures.PtvStop
 import moe.lava.banksia.log
 import okio.ByteString.Companion.encodeUtf8
+import kotlin.random.Random
 
 object Responses {
     @Serializable
@@ -71,6 +72,8 @@ class PtvService {
     constructor() {
         client.plugin(HttpSend).intercept { req ->
             req.parameter("devid", Constants.devid)
+            @OptIn(ExperimentalStdlibApi::class)
+            req.parameter("nonce", Random.nextBytes(6).toHexString())
             val fullPath = req.url.build().encodedPathAndQuery
             val hash = fullPath.encodeUtf8().hmacSha1(Constants.key.encodeUtf8()).hex()
             req.parameter("signature", hash)

@@ -23,10 +23,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
-import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
@@ -35,24 +35,19 @@ import androidx.compose.ui.backhandler.PredictiveBackHandler
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
 import dev.icerock.moko.geo.compose.BindLocationTrackerEffect
 import dev.icerock.moko.geo.compose.LocationTrackerAccuracy
 import dev.icerock.moko.geo.compose.rememberLocationTrackerFactory
-import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
-import moe.lava.banksia.api.ptv.PtvService
-import moe.lava.banksia.api.ptv.structures.PtvRoute
-import moe.lava.banksia.api.ptv.structures.PtvStop
-import moe.lava.banksia.api.ptv.structures.getProperties
 import moe.lava.banksia.native.BanksiaTheme
 import moe.lava.banksia.native.maps.Maps
-import moe.lava.banksia.native.maps.Marker
-import moe.lava.banksia.native.maps.MarkerType
 import moe.lava.banksia.native.maps.Point
-import moe.lava.banksia.native.maps.Polyline
 import moe.lava.banksia.native.maps.getScreenHeight
 import moe.lava.banksia.resources.Res
 import moe.lava.banksia.resources.my_location_24
+import moe.lava.banksia.ui.BanksiaViewModel
 import moe.lava.banksia.ui.Searcher
 import moe.lava.banksia.ui.StopInfoPanel
 import org.jetbrains.compose.resources.painterResource
@@ -60,29 +55,23 @@ import org.jetbrains.compose.ui.tooling.preview.Preview
 import kotlin.coroutines.cancellation.CancellationException
 import kotlin.math.roundToInt
 
-fun buildBounds(points: List<Point>): Pair<Point, Point> {
-    var north = -Double.MAX_VALUE
-    var south = Double.MAX_VALUE
-    var east = -Double.MAX_VALUE
-    var west = Double.MAX_VALUE
-    points.forEach {
-        if (it.lat > north)
-            north = it.lat;
-        if (it.lat < south)
-            south = it.lat;
-        if (it.lng > east)
-            east = it.lng;
-        if (it.lng < west)
-            west = it.lng;
-    }
-    return Pair(Point(north, east), Point(south, west))
-}
+val MELBOURNE = Point(-37.8136, 144.9631)
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalComposeUiApi::class)
 @Composable
 @Preview
-fun App() {
-    val ptvService = remember { PtvService() }
+fun App(
+    viewModel: BanksiaViewModel = viewModel()
+) {
+    val scope = rememberCoroutineScope()
+
+    val locationFactory = rememberLocationTrackerFactory(LocationTrackerAccuracy.Best)
+    val locationTracker = remember { locationFactory.createLocationTracker() }
+    BindLocationTrackerEffect(locationTracker)
+    viewModel.bindTracker(locationTracker)
+    scope.launch { locationTracker.startTracking() }
+
+    val state by viewModel.state.collectAsStateWithLifecycle()
 
     val scaffoldState = rememberBottomSheetScaffoldState(
         bottomSheetState = rememberStandardBottomSheetState(
@@ -90,18 +79,6 @@ fun App() {
             skipHiddenState = false
         )
     )
-
-    val locationFactory = rememberLocationTrackerFactory(LocationTrackerAccuracy.Best)
-    val locationTracker = remember { locationFactory.createLocationTracker() }
-    BindLocationTrackerEffect(locationTracker)
-    var lastLocation by remember { mutableStateOf(Point(-37.8136, 144.9631)) }
-    var newCameraPosition by remember {
-        mutableStateOf<Pair<Point, Pair<Point, Point>?>?>(
-            Pair(Point(-37.8136, 144.9631), null)
-        )
-    }
-    var searchTextState by remember { mutableStateOf("") }
-    var searchExpandedState by remember { mutableStateOf(false) }
 
     val sheetState = scaffoldState.bottomSheetState
     val extInsets = if (
@@ -113,72 +90,31 @@ fun App() {
         (getScreenHeight() - scaffoldOffset - WindowInsets.safeDrawing.getBottom(LocalDensity.current)).coerceAtLeast(0)
     } else 0
 
-    var scope = rememberCoroutineScope()
-    scope.launch {
-        val flow = locationTracker.getLocationsFlow()
-        locationTracker.startTracking()
-        flow.distinctUntilChanged().collect {
-            lastLocation = Point(it.latitude, it.longitude)
-        }
+    LaunchedEffect(state.stopState) {
+        val isShown = state.stopState != null
+        if (isShown)
+            scope.launch { scaffoldState.bottomSheetState.partialExpand() }
+        else
+            scope.launch { scaffoldState.bottomSheetState.hide() }
     }
 
-    var route by remember { mutableStateOf<PtvRoute?>(null) }
-    val polylines = remember { mutableStateListOf<Polyline>() }
-
-    LaunchedEffect(route) {
-        val route = route
-        polylines.clear()
-        if (route == null)
-            return@LaunchedEffect
-        val geoRoute = ptvService.route(route.routeId, true)
-        val colour = route.routeType.getProperties().colour
-
-        val allPoints = mutableListOf<Point>()
-        geoRoute.geopath.forEach { pp ->
-            // TODO: use gtfs colours
-            pp.paths.forEach { sp ->
-                val polyline = sp.replace(", ", ",")
-                    .split(" ")
-                    .map { coord ->
-                        val s = coord.split(",")
-                        val point = Point(s[0].toDouble(), s[1].toDouble())
-                        allPoints.add(point)
-                        point
-                    }
-                polylines.add(Polyline(polyline, colour))
-            }
-        }
-        if (allPoints.isNotEmpty())
-            newCameraPosition = Pair(Point(0.0, 0.0), buildBounds(allPoints))
-    }
-
-    var sheetSwipeEnabled by remember { mutableStateOf(true) }
+    var searchTextState by rememberSaveable { mutableStateOf("") }
+    var searchExpandedState by rememberSaveable { mutableStateOf(false) }
+    var sheetSwipeEnabled by rememberSaveable { mutableStateOf(true) }
     var handleHeight by remember { mutableStateOf(0.dp) }
     var peekHeight by remember { mutableStateOf(0.dp) }
     var peekHeightMultiplier by remember { mutableFloatStateOf(1F) }
-
-    var stop by remember { mutableStateOf<PtvStop?>(null) }
-    var markers by remember { mutableStateOf(listOf<Marker>()) }
-    LaunchedEffect(route) {
-        markers = listOf()
-        route?.let { route ->
-            markers = buildStops(ptvService, route) {
-                stop = it
-                scope.launch { scaffoldState.bottomSheetState.partialExpand() }
-            }
-        }
-    }
 
     BanksiaTheme {
         BottomSheetScaffold(
             scaffoldState = scaffoldState,
             sheetPeekHeight = (handleHeight + peekHeight) * peekHeightMultiplier,
             modifier = Modifier.fillMaxSize(),
-            sheetContent = { stop?.let {
-                StopInfoPanel(ptvService, it) {
-                    peekHeight = it
+            sheetContent = {
+                state.stopState?.let { stopState ->
+                    StopInfoPanel(stopState) { peekHeight = it }
                 }
-            } },
+            },
             sheetDragHandle = {
                 val density = LocalDensity.current
                 Box(
@@ -196,26 +132,26 @@ fun App() {
         ) {
             Maps(
                 modifier = Modifier.fillMaxSize(),
-                newCameraPosition = newCameraPosition,
-                cameraPositionUpdated = { newCameraPosition = null },
+                cameraPositionFlow = viewModel.cameraChangeEmitter,
                 extInsets = WindowInsets(top = with(LocalDensity.current) {
                     SearchBarDefaults.InputFieldHeight.roundToPx()
                 }, bottom = extInsets),
-                markers = markers,
-                polylines = polylines,
+                markers = state.markers,
+                setLastKnownLocation = viewModel::setLastKnownLocation,
+                polylines = state.polylines,
             )
             Searcher(
-                ptvService = ptvService,
+                selectedRoute = state.routeState?.route,
+                routes = state.routes,
                 expanded = searchExpandedState,
                 onExpandedChange = {
                     searchExpandedState = it
                     if (it)
                         scope.launch { scaffoldState.bottomSheetState.hide() }
                 },
-                route = route,
                 text = searchTextState,
                 onTextChange = { searchTextState = it },
-                onRouteChange = { route = it }
+                onRouteChange = { viewModel.switchRoute(it) }
             )
 
             PredictiveBackHandler(scaffoldState.bottomSheetState.currentValue != SheetValue.Hidden) { progress ->
@@ -245,42 +181,11 @@ fun App() {
             ) {
                 FloatingActionButton(
                     containerColor = MaterialTheme.colorScheme.surfaceContainer,
-                    onClick = {
-                        newCameraPosition = Pair(lastLocation, null)
-                    },
+                    onClick = { viewModel.centreCameraToLocation() },
                 ) {
                     Icon(painterResource(Res.drawable.my_location_24), "Move to current location")
                 }
             }
         }
     }
-}
-
-suspend fun buildStops(
-    ptvService: PtvService,
-    route: PtvRoute,
-    launchInfoPanel: (PtvStop) -> Unit,
-): List<Marker> {
-    var stops = ptvService.stopsByRoute(route.routeId, route.routeType)
-    var res = mutableListOf<Marker>()
-    val colour = route.routeType.getProperties().colour
-
-    for (stop in stops) {
-        if (stop.stopLatitude != null && stop.stopLongitude != null) {
-            val pos = Point(stop.stopLatitude!!, stop.stopLongitude!!)
-
-            val marker = Marker(
-                point = pos,
-                type = MarkerType.GENERIC_STOP,
-                colour = colour,
-                onClick = {
-                    launchInfoPanel(stop)
-                    false
-                }
-            )
-            res.add(marker)
-        }
-    }
-
-    return res
 }

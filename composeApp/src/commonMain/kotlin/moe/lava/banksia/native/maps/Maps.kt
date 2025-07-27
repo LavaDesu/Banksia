@@ -5,6 +5,8 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import kotlinx.coroutines.flow.Flow
+import moe.lava.banksia.ui.BoxedValue
 
 enum class MarkerType {
     GENERIC_STOP,
@@ -18,6 +20,12 @@ data class Marker(
 data class Point(val lat: Double, val lng: Double)
 data class Polyline(val points: List<Point>, val colour: Color)
 
+data class CameraPositionBounds(val northeast: Point, val southwest: Point)
+data class CameraPosition(
+    val centre: Point = Point(-37.8136, 144.9631),
+    val bounds: CameraPositionBounds? = null,
+)
+
 @Composable
 expect fun getScreenHeight(): Int
 
@@ -27,8 +35,7 @@ expect fun Maps(
     modifier: Modifier = Modifier,
     markers: List<Marker> = listOf(),
     polylines: List<Polyline> = listOf(),
-    // <Centre: Point, Bounds?: <Northeast, Southwest>>
-    newCameraPosition: Pair<Point, Pair<Point, Point>?>? = Pair(Point(-37.8136, 144.9631), null),
-    cameraPositionUpdated: () -> Unit,
+    cameraPositionFlow: Flow<BoxedValue<CameraPosition>>,
+    setLastKnownLocation: (Point) -> Unit,
     extInsets: WindowInsets,
 )

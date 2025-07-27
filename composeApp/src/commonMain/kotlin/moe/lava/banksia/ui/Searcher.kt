@@ -41,7 +41,6 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import moe.lava.banksia.api.ptv.PtvService
 import moe.lava.banksia.api.ptv.structures.ComposableIcon
 import moe.lava.banksia.api.ptv.structures.PtvRoute
 import kotlin.coroutines.cancellation.CancellationException
@@ -50,10 +49,10 @@ import kotlin.math.pow
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalComposeUiApi::class)
 @Composable
 fun Searcher(
-    ptvService: PtvService,
+    selectedRoute: PtvRoute?,
+    routes: List<PtvRoute>,
     expanded: Boolean,
     onExpandedChange: (Boolean) -> Unit,
-    route: PtvRoute?,
     text: String,
     onTextChange: (String) -> Unit,
     onRouteChange: (PtvRoute?) -> Unit,
@@ -66,18 +65,8 @@ fun Searcher(
         },
         label = "padding"
     )
-    var routes by remember { mutableStateOf(listOf<PtvRoute>()) }
+
     Box(modifier = Modifier.fillMaxSize()) {
-        LaunchedEffect(Unit) {
-            val localRoutes = ptvService.routes()
-            routes = localRoutes.sortedWith(
-                compareBy(
-                    { it.gtfsSubType()?.ordinal },
-                    { it.routeNumber.toIntOrNull() },
-                    { it.routeName }
-                )
-            )
-        }
         SearchBar(
             modifier = Modifier
                 .align(Alignment.TopCenter)
@@ -89,14 +78,13 @@ fun Searcher(
                 var backEdgeIsLeft by remember { mutableStateOf<Boolean?>(null) }
                 val routeInfoOpacity by animateFloatAsState((1f - backProgress).pow(3))
                 val slideState by animateDpAsState((50 * backProgress).dp)
-                val slidePadding = if (backEdgeIsLeft == true)
-                    PaddingValues(start = slideState)
-                else if (backEdgeIsLeft == false)
-                    PaddingValues(end = slideState)
-                else
-                    PaddingValues()
+                val slidePadding = when (backEdgeIsLeft) {
+                    true -> PaddingValues(start = slideState)
+                    false -> PaddingValues(end = slideState)
+                    null -> PaddingValues()
+                }
 
-                PredictiveBackHandler(enabled = route != null) { progress ->
+                PredictiveBackHandler(enabled = selectedRoute != null) { progress ->
                     try {
                         progress.collect { backEvent ->
                             backProgress = backEvent.progress
@@ -110,7 +98,7 @@ fun Searcher(
                     backEdgeIsLeft = null
                 }
                 SearchBarDefaults.InputField(
-                    enabled = route == null,
+                    enabled = selectedRoute == null,
                     modifier = Modifier
                         .alpha(1f - routeInfoOpacity)
                         .padding(horizontal = 20.dp - animatedPadding),
@@ -129,11 +117,11 @@ fun Searcher(
                             )
                     }
                 )
-                LaunchedEffect(route) {
-                    backProgress = if (route != null) 0f else 1f;
+                LaunchedEffect(selectedRoute) {
+                    backProgress = if (selectedRoute != null) 0f else 1f;
                 }
-                if (route != null)
-                    RouteInfo(routeInfoOpacity, slidePadding, onRouteChange, route)
+                if (selectedRoute != null)
+                    RouteInfo(routeInfoOpacity, slidePadding, onRouteChange, selectedRoute)
             },
             expanded = expanded,
             onExpandedChange = onExpandedChange,

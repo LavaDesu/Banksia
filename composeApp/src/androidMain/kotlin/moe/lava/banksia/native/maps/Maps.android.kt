@@ -16,7 +16,9 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalConfiguration
@@ -24,9 +26,9 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.maps.CameraUpdateFactory
-import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.LatLngBounds
 import com.google.android.gms.maps.model.MapStyleOptions
@@ -38,8 +40,11 @@ import com.google.maps.android.compose.MarkerComposable
 import com.google.maps.android.compose.Polyline
 import com.google.maps.android.compose.rememberCameraPositionState
 import com.google.maps.android.compose.rememberMarkerState
+import kotlinx.coroutines.flow.Flow
 import moe.lava.banksia.R
 import moe.lava.banksia.native.BanksiaTheme
+import moe.lava.banksia.ui.BoxedValue
+import com.google.android.gms.maps.model.CameraPosition as GoogleCameraPosition
 
 fun Point.toLatLng(): LatLng = LatLng(this.lat, this.lng)
 
@@ -61,31 +66,36 @@ actual fun Maps(
     modifier: Modifier,
     markers: List<Marker>,
     polylines: List<Polyline>,
-    newCameraPosition: Pair<Point, Pair<Point, Point>?>?,
-    cameraPositionUpdated: () -> Unit,
+    cameraPositionFlow: Flow<BoxedValue<CameraPosition>>,
+    setLastKnownLocation: (Point) -> Unit,
     extInsets: WindowInsets,
 ) {
-    var camPos = rememberCameraPositionState()
+    val scope = rememberCoroutineScope()
+    val camPos = rememberCameraPositionState()
+    val newCameraPos by cameraPositionFlow.collectAsStateWithLifecycle(null)
+    LaunchedEffect(newCameraPos) {
+        val pos = newCameraPos?.value ?: return@LaunchedEffect
+        val update = if (pos.bounds != null) {
+            val (northeast, southwest) = pos.bounds
+            val bounds = LatLngBounds(
+                southwest.toLatLng(),
+                northeast.toLatLng()
+            )
+            CameraUpdateFactory.newLatLngBounds(bounds, 150)
+        } else
+            CameraUpdateFactory.newLatLngZoom(pos.centre.toLatLng(), 16.0f)
+
+        camPos.animate(update, 1000)
+    }
+
     val ctx = LocalContext.current
     val fusedLocation = remember { LocationServices.getFusedLocationProviderClient(ctx) }
     LaunchedEffect(Unit) {
         fusedLocation.lastLocation.addOnSuccessListener {
-            if (it != null)
-                camPos.position = CameraPosition(LatLng(it.latitude, it.longitude), 16.0f, 0.0f, 0.0f)
-        }
-    }
-    LaunchedEffect(newCameraPosition) {
-        if (newCameraPosition != null) {
-            if (newCameraPosition.second != null) {
-                val (northeast, southwest) = newCameraPosition.second!!
-                val bounds = LatLngBounds(
-                    southwest.toLatLng(),
-                    northeast.toLatLng()
-                )
-                camPos.animate(CameraUpdateFactory.newLatLngBounds(bounds, 150), 1000)
-            } else
-                camPos.animate(CameraUpdateFactory.newLatLngZoom(newCameraPosition.first.toLatLng(), 16.0f), 1000)
-            cameraPositionUpdated()
+            if (it != null) {
+                camPos.position = GoogleCameraPosition(LatLng(it.latitude, it.longitude), 16.0f, 0.0f, 0.0f)
+                setLastKnownLocation(Point(it.latitude, it.longitude))
+            }
         }
     }
 
