@@ -7,7 +7,7 @@ import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalWindowInfo
 import kotlinx.coroutines.flow.Flow
-import moe.lava.banksia.ui.BoxedValue
+import moe.lava.banksia.util.BoxedValue
 
 @OptIn(ExperimentalComposeUiApi::class)
 @Composable

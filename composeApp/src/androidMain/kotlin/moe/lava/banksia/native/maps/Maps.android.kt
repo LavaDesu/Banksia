@@ -43,7 +43,7 @@ import com.google.maps.android.compose.rememberMarkerState
 import kotlinx.coroutines.flow.Flow
 import moe.lava.banksia.R
 import moe.lava.banksia.native.BanksiaTheme
-import moe.lava.banksia.ui.BoxedValue
+import moe.lava.banksia.util.BoxedValue
 import com.google.android.gms.maps.model.CameraPosition as GoogleCameraPosition
 
 fun Point.toLatLng(): LatLng = LatLng(this.lat, this.lng)

@@ -27,7 +27,8 @@ import moe.lava.banksia.native.maps.Marker
 import moe.lava.banksia.native.maps.MarkerType
 import moe.lava.banksia.native.maps.Point
 import moe.lava.banksia.native.maps.Polyline
-import moe.lava.banksia.ui.BoxedValue.Companion.box
+import moe.lava.banksia.util.BoxedValue
+import moe.lava.banksia.util.BoxedValue.Companion.box
 
 data class RouteState(
     val route: PtvRoute,
@@ -49,14 +50,6 @@ data class BanksiaViewState(
     val markers: List<Marker> = listOf(),
     val polylines: List<Polyline> = listOf(),
 )
-
-class BoxedValue<T>(val value: T) {
-    operator fun component1() = value
-
-    companion object {
-        fun <T> T.box() = BoxedValue(this)
-    }
-}
 
 class BanksiaViewModel : ViewModel() {
     private val iState = MutableStateFlow(BanksiaViewState())
@@ -113,6 +106,7 @@ class BanksiaViewModel : ViewModel() {
         iState.update {
             it.copy(
                 routeState = routeState,
+                stopState = null,
                 markers = listOf(),
                 polylines = listOf(),
             )

@@ -6,7 +6,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import kotlinx.coroutines.flow.Flow
-import moe.lava.banksia.ui.BoxedValue
+import moe.lava.banksia.util.BoxedValue
 
 enum class MarkerType {
     GENERIC_STOP,
