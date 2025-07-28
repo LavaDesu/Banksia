@@ -16,7 +16,7 @@ import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
 import moe.lava.banksia.api.ptv.PtvService
 import moe.lava.banksia.api.ptv.structures.PtvRoute
-import moe.lava.banksia.api.ptv.structures.PtvStop
+import moe.lava.banksia.api.ptv.structures.PtvRouteType
 import moe.lava.banksia.api.ptv.structures.getProperties
 import moe.lava.banksia.log
 import moe.lava.banksia.native.maps.CameraPosition
@@ -27,19 +27,18 @@ import moe.lava.banksia.native.maps.Point
 import moe.lava.banksia.native.maps.Polyline
 import moe.lava.banksia.ui.state.InfoPanelState
 import moe.lava.banksia.ui.state.MapState
+import moe.lava.banksia.ui.state.SearchState
 import moe.lava.banksia.util.BoxedValue
 import moe.lava.banksia.util.BoxedValue.Companion.box
 
-sealed class BanksiaEvent {}
+sealed class BanksiaEvent {
+    data class SelectRoute(val id: Int?) : BanksiaEvent()
+    data class SelectStop(val routeType: PtvRouteType, val stopId: Int?) : BanksiaEvent()
 
-data class BanksiaViewState(
-    val routes: List<PtvRoute> = listOf(),
-)
+    data class SearchUpdate(val text: String) : BanksiaEvent()
+}
 
 class BanksiaViewModel : ViewModel() {
-    private val iState = MutableStateFlow(BanksiaViewState())
-    val state = iState.asStateFlow()
-
     private val iInfoState = MutableStateFlow<InfoPanelState>(InfoPanelState.None)
     val infoState = iInfoState.asStateFlow()
 
@@ -48,17 +47,26 @@ class BanksiaViewModel : ViewModel() {
     private val iCameraChangeEmitter = MutableSharedFlow<BoxedValue<CameraPosition>>()
     val cameraChangeEmitter = iCameraChangeEmitter.asSharedFlow()
 
+    private val iSearchState = MutableStateFlow(SearchState())
+    val searchState = iSearchState.asStateFlow()
+
     private val ptvService = PtvService()
     private var locationTrackerJob: Job? = null
     private var lastKnownLocation: Point? = null
 
     init {
-        viewModelScope.launch {
-            requestRoutes()
-        }
+        viewModelScope.launch { searchUpdate("") }
     }
 
-    fun handleEvent(event: BanksiaEvent) {}
+    fun handleEvent(event: BanksiaEvent) {
+        viewModelScope.launch {
+            when (event) {
+                is BanksiaEvent.SelectRoute -> switchRoute(event.id)
+                is BanksiaEvent.SelectStop -> switchStop(event.routeType, event.stopId)
+                is BanksiaEvent.SearchUpdate -> searchUpdate(event.text)
+            }
+        }
+    }
 
     fun bindTracker(locationTracker: LocationTracker) {
         locationTrackerJob = locationTracker.getLocationsFlow()
@@ -79,43 +87,57 @@ class BanksiaViewModel : ViewModel() {
         lastKnownLocation = location
     }
 
-    private suspend fun requestRoutes() {
-        val routes = ptvService.routes().sortedWith(
-            compareBy(
-                { it.gtfsSubType()?.ordinal },
-                { it.routeNumber.toIntOrNull() },
-                { it.routeName }
-            )
-        )
-        iState.update { it.copy(routes = routes) }
-    }
-
-    fun switchRoute(route: PtvRoute?) {
-        iMapState.update { MapState() }
-        iInfoState.update {
-            if (route == null)
-                InfoPanelState.None
-            else
-                InfoPanelState.Route(
-                    name = route.routeName,
-                    type = route.routeType,
+    private suspend fun searchUpdate(text: String) {
+        val entries = ptvService.routes()
+            .sortedWith(
+                compareBy(
+                    { it.gtfsSubType()?.ordinal },
+                    { it.routeNumber.toIntOrNull() },
+                    { it.routeName }
                 )
-        }
+            )
+            .filter { it.routeNumber.contains(text) || it.routeName.lowercase().contains(text.lowercase()) }
+            .map { route ->
+                val (main, sub) = if (route.routeNumber.isNotEmpty()) {
+                    route.routeNumber to route.routeName
+                } else {
+                    route.routeName to null
+                }
 
-        if (route != null) {
-            viewModelScope.launch { buildPolylines(route) }
-            viewModelScope.launch { buildStops(route) }
-//            viewModelScope.launch { buildDepartures() }
-//            viewModelScope.launch { buildRuns() }
-        }
+                SearchState.SearchEntry(main, sub, route.routeId, route.routeType)
+            }
+
+        iSearchState.update { SearchState(entries, text) }
     }
 
-    // [TODO]: Cleanup
-    suspend fun switchStop(stop: PtvStop?) {
-        if (stop == null) {
+    private suspend fun switchRoute(routeId: Int?) {
+        iMapState.update { MapState() }
+        if (routeId == null) {
             iInfoState.update { InfoPanelState.None }
             return
         }
+
+        val route = ptvService.route(routeId)
+        iInfoState.update {
+            InfoPanelState.Route(
+                name = route.routeName,
+                type = route.routeType,
+            )
+        }
+
+        viewModelScope.launch { buildPolylines(route) }
+        viewModelScope.launch { buildStops(route) }
+//            viewModelScope.launch { buildDepartures() }
+//            viewModelScope.launch { buildRuns() }
+    }
+
+    // [TODO]: Cleanup
+    private suspend fun switchStop(routeType: PtvRouteType, stopId: Int?) {
+        if (stopId == null) {
+            iInfoState.update { InfoPanelState.None }
+            return
+        }
+        val stop = ptvService.stop(routeType, stopId)
         val split = stop.stopName.split("/")
         val name = split[0]
         val subname = split.getOrNull(1)
@@ -229,7 +251,7 @@ class BanksiaViewModel : ViewModel() {
                     type = MarkerType.GENERIC_STOP,
                     colour = colour,
                     onClick = {
-                        viewModelScope.launch { switchStop(stop) }
+                        viewModelScope.launch { switchStop(route.routeType, stop.stopId) }
                         false
                     }
                 )

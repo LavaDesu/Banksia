@@ -29,6 +29,8 @@ object Responses {
     data class PtvRoutesResponse(val routes: List<PtvRoute>)
 
     @Serializable
+    data class PtvStopResponse(val stop: PtvStop)
+    @Serializable
     data class PtvStopsResponse(val stops: List<PtvStop>)
 
     @Serializable
@@ -43,6 +45,8 @@ class PtvService {
     class PtvCache(
         private val service: PtvService,
         private val directions: HashMap<Pair<Int, Int>, PtvDirection> = HashMap(),
+        private val routes: HashMap<Int, PtvRoute> = HashMap(),
+        private val stops: HashMap<Int, PtvStop> = HashMap(),
     ) {
         suspend fun direction(directionID: Int, routeID: Int): PtvDirection? {
             val ret = directions[Pair(directionID, routeID)]
@@ -54,6 +58,23 @@ class PtvService {
 
             return ret ?: directions[Pair(directionID, routeID)]
         }
+
+        fun setRoutes(routes: Iterable<PtvRoute>) {
+            routes.forEach {
+                this.routes[it.routeId] = it
+            }
+        }
+
+        fun getRoute(routeId: Int) = routes[routeId]
+        fun getRoutes() = routes.values.toList()
+
+        fun addStops(stops: Iterable<PtvStop>) {
+            stops.forEach {
+                this.stops[it.stopId] = it
+            }
+        }
+
+        fun getStop(stopId: Int) = stops[stopId]
     }
 
     val cache = PtvCache(this)
@@ -83,17 +104,28 @@ class PtvService {
     }
 
     suspend fun route(id: Int, includeGeopath: Boolean = false): PtvRoute {
+        val cached = cache.getRoute(id)
+        // TODO: im braindead so clean this up later
+        if (cached != null && (!includeGeopath || (includeGeopath && cached.geopath.isNotEmpty())))
+            return cached
+
         val response: Responses.PtvRouteResponse = client.get("routes") {
             url {
                 appendPathSegments(id.toString())
                 parameters.append("include_geopath", if (includeGeopath) "true" else "false")
             }
         }.body()
+        cache.setRoutes(listOf(response.route))
         return response.route
     }
 
     suspend fun routes(): List<PtvRoute> {
+        val cached = cache.getRoutes()
+        if (cached.isNotEmpty())
+            return cached
+
         val response: Responses.PtvRoutesResponse = client.get("routes").body()
+        cache.setRoutes(response.routes)
         return response.routes
     }
 
@@ -108,7 +140,29 @@ class PtvService {
                 )
             }
         }.body()
-        return response.stops
+        val stops = response.stops
+        cache.addStops(stops)
+        return stops
+    }
+
+    suspend fun stop(routeType: PtvRouteType, stopId: Int): PtvStop {
+        val cached = cache.getStop(stopId)
+        if (cached != null)
+            return cached
+
+        val response: Responses.PtvStopResponse = client.get() {
+            url {
+                appendPathSegments(
+                    "stops",
+                    stopId.toString(),
+                    "route_type",
+                    routeType.ordinal.toString(),
+                )
+            }
+        }.body()
+        val stop = response.stop
+        cache.addStops(listOf(stop))
+        return stop
     }
 
     suspend fun directionsByRoute(routeId: Int): List<PtvDirection> {

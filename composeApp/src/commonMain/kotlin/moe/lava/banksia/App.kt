@@ -72,9 +72,9 @@ fun App(
     viewModel.bindTracker(locationTracker)
     scope.launch { locationTracker.startTracking() }
 
-    val state by viewModel.state.collectAsStateWithLifecycle()
     val infoState by viewModel.infoState.collectAsStateWithLifecycle()
     val mapState by viewModel.mapState.collectAsStateWithLifecycle()
+    val searchState by viewModel.searchState.collectAsStateWithLifecycle()
 
     val scaffoldState = rememberBottomSheetScaffoldState(
         bottomSheetState = rememberStandardBottomSheetState(
@@ -100,7 +100,6 @@ fun App(
             scope.launch { scaffoldState.bottomSheetState.hide() }
     }
 
-    var searchTextState by rememberSaveable { mutableStateOf("") }
     var searchExpandedState by rememberSaveable { mutableStateOf(false) }
     var sheetSwipeEnabled by rememberSaveable { mutableStateOf(true) }
     var handleHeight by remember { mutableStateOf(0.dp) }
@@ -145,16 +144,14 @@ fun App(
                 polylines = mapState.polylines,
             )
             Searcher(
-                routes = state.routes,
+                state = searchState,
+                onEvent = viewModel::handleEvent,
                 expanded = searchExpandedState,
                 onExpandedChange = {
                     searchExpandedState = it
                     if (it)
                         scope.launch { scaffoldState.bottomSheetState.hide() }
                 },
-                text = searchTextState,
-                onTextChange = { searchTextState = it },
-                onRouteChange = { viewModel.switchRoute(it) }
             )
 
             PredictiveBackHandler(scaffoldState.bottomSheetState.currentValue != SheetValue.Hidden) { progress ->
