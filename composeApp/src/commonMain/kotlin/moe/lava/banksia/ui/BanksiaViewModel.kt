@@ -26,6 +26,7 @@ import moe.lava.banksia.native.maps.MarkerType
 import moe.lava.banksia.native.maps.Point
 import moe.lava.banksia.native.maps.Polyline
 import moe.lava.banksia.ui.state.InfoPanelState
+import moe.lava.banksia.ui.state.MapState
 import moe.lava.banksia.util.BoxedValue
 import moe.lava.banksia.util.BoxedValue.Companion.box
 
@@ -33,8 +34,6 @@ sealed class BanksiaEvent {}
 
 data class BanksiaViewState(
     val routes: List<PtvRoute> = listOf(),
-    val markers: List<Marker> = listOf(),
-    val polylines: List<Polyline> = listOf(),
 )
 
 class BanksiaViewModel : ViewModel() {
@@ -44,12 +43,14 @@ class BanksiaViewModel : ViewModel() {
     private val iInfoState = MutableStateFlow<InfoPanelState>(InfoPanelState.None)
     val infoState = iInfoState.asStateFlow()
 
+    private val iMapState = MutableStateFlow(MapState())
+    val mapState = iMapState.asStateFlow()
+    private val iCameraChangeEmitter = MutableSharedFlow<BoxedValue<CameraPosition>>()
+    val cameraChangeEmitter = iCameraChangeEmitter.asSharedFlow()
+
     private val ptvService = PtvService()
     private var locationTrackerJob: Job? = null
     private var lastKnownLocation: Point? = null
-
-    private val iCameraChangeEmitter = MutableSharedFlow<BoxedValue<CameraPosition>>()
-    val cameraChangeEmitter = iCameraChangeEmitter.asSharedFlow()
 
     init {
         viewModelScope.launch {
@@ -90,12 +91,7 @@ class BanksiaViewModel : ViewModel() {
     }
 
     fun switchRoute(route: PtvRoute?) {
-        iState.update {
-            it.copy(
-                markers = listOf(),
-                polylines = listOf(),
-            )
-        }
+        iMapState.update { MapState() }
         iInfoState.update {
             if (route == null)
                 InfoPanelState.None
@@ -197,7 +193,7 @@ class BanksiaViewModel : ViewModel() {
         else
             null
 
-        iState.update { it.copy(polylines = polylines) }
+        iMapState.update { it.copy(polylines = polylines) }
         newCameraPosition?.let { iCameraChangeEmitter.emit(it.box()) }
     }
 
@@ -241,7 +237,7 @@ class BanksiaViewModel : ViewModel() {
             }
         }
 
-        iState.update { it.copy(markers = markers) }
+        iMapState.update { it.copy(markers = markers) }
     }
 
     private fun buildBounds(points: List<Point>): CameraPositionBounds {

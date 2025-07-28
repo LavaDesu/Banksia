@@ -74,6 +74,7 @@ fun App(
 
     val state by viewModel.state.collectAsStateWithLifecycle()
     val infoState by viewModel.infoState.collectAsStateWithLifecycle()
+    val mapState by viewModel.mapState.collectAsStateWithLifecycle()
 
     val scaffoldState = rememberBottomSheetScaffoldState(
         bottomSheetState = rememberStandardBottomSheetState(
@@ -139,9 +140,9 @@ fun App(
                 extInsets = WindowInsets(top = with(LocalDensity.current) {
                     SearchBarDefaults.InputFieldHeight.roundToPx()
                 }, bottom = extInsets),
-                markers = state.markers,
+                markers = mapState.markers,
                 setLastKnownLocation = viewModel::setLastKnownLocation,
-                polylines = state.polylines,
+                polylines = mapState.polylines,
             )
             Searcher(
                 routes = state.routes,
