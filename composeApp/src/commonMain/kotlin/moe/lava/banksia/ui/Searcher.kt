@@ -5,51 +5,38 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.sizeIn
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemDefaults
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SearchBar
 import androidx.compose.material3.SearchBarDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.backhandler.PredictiveBackHandler
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import moe.lava.banksia.api.ptv.structures.ComposableIcon
 import moe.lava.banksia.api.ptv.structures.PtvRoute
-import kotlin.coroutines.cancellation.CancellationException
 import kotlin.math.pow
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalComposeUiApi::class)
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun Searcher(
-    selectedRoute: PtvRoute?,
     routes: List<PtvRoute>,
     expanded: Boolean,
     onExpandedChange: (Boolean) -> Unit,
@@ -84,21 +71,7 @@ fun Searcher(
                     null -> PaddingValues()
                 }
 
-                PredictiveBackHandler(enabled = selectedRoute != null) { progress ->
-                    try {
-                        progress.collect { backEvent ->
-                            backProgress = backEvent.progress
-                            backEdgeIsLeft = backEvent.swipeEdge == 0
-                        }
-                        backProgress = 1f
-                        onRouteChange(null)
-                    } catch (_: CancellationException) {
-                        backProgress = 0f
-                    }
-                    backEdgeIsLeft = null
-                }
                 SearchBarDefaults.InputField(
-                    enabled = selectedRoute == null,
                     modifier = Modifier
                         .alpha(1f - routeInfoOpacity)
                         .padding(horizontal = 20.dp - animatedPadding),
@@ -117,11 +90,6 @@ fun Searcher(
                             )
                     }
                 )
-                LaunchedEffect(selectedRoute) {
-                    backProgress = if (selectedRoute != null) 0f else 1f;
-                }
-                if (selectedRoute != null)
-                    RouteInfo(routeInfoOpacity, slidePadding, onRouteChange, selectedRoute)
             },
             expanded = expanded,
             onExpandedChange = onExpandedChange,
@@ -153,50 +121,6 @@ fun Searcher(
                     }
                 }
             }
-        }
-    }
-}
-
-@Composable
-@OptIn(ExperimentalMaterial3Api::class)
-private fun RouteInfo(
-    routeInfoOpacity: Float,
-    slidePadding: PaddingValues,
-    onRouteChange: (PtvRoute?) -> Unit,
-    route: PtvRoute
-) {
-    Box(
-        modifier = Modifier
-            .alpha(routeInfoOpacity)
-            .sizeIn(
-                minHeight = SearchBarDefaults.InputFieldHeight,
-                maxHeight = SearchBarDefaults.InputFieldHeight,
-            )
-            .fillMaxWidth()
-            .padding(slidePadding)
-    ) {
-        IconButton(
-            modifier = Modifier.align(Alignment.CenterStart),
-            onClick = {
-                onRouteChange(null)
-            }
-        ) {
-            Icon(Icons.AutoMirrored.Filled.ArrowBack, "Clear route")
-        }
-        Row(
-            modifier = Modifier
-                .padding(horizontal = 50.dp)
-                .align(Alignment.Center),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            route.routeType.ComposableIcon()
-            Spacer(Modifier.width(15.dp))
-            Text(
-                route.routeNumber.ifEmpty { route.routeName },
-                style = MaterialTheme.typography.headlineSmall,
-                overflow = TextOverflow.Ellipsis,
-                maxLines = 1,
-            )
         }
     }
 }

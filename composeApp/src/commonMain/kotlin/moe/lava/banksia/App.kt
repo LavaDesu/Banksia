@@ -48,8 +48,9 @@ import moe.lava.banksia.native.maps.getScreenHeight
 import moe.lava.banksia.resources.Res
 import moe.lava.banksia.resources.my_location_24
 import moe.lava.banksia.ui.BanksiaViewModel
+import moe.lava.banksia.ui.InfoPanel
 import moe.lava.banksia.ui.Searcher
-import moe.lava.banksia.ui.StopInfoPanel
+import moe.lava.banksia.ui.state.InfoPanelState
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import kotlin.coroutines.cancellation.CancellationException
@@ -72,6 +73,7 @@ fun App(
     scope.launch { locationTracker.startTracking() }
 
     val state by viewModel.state.collectAsStateWithLifecycle()
+    val infoState by viewModel.infoState.collectAsStateWithLifecycle()
 
     val scaffoldState = rememberBottomSheetScaffoldState(
         bottomSheetState = rememberStandardBottomSheetState(
@@ -90,9 +92,8 @@ fun App(
         (getScreenHeight() - scaffoldOffset - WindowInsets.safeDrawing.getBottom(LocalDensity.current)).coerceAtLeast(0)
     } else 0
 
-    LaunchedEffect(state.stopState) {
-        val isShown = state.stopState != null
-        if (isShown)
+    LaunchedEffect(infoState) {
+        if (infoState !is InfoPanelState.None)
             scope.launch { scaffoldState.bottomSheetState.partialExpand() }
         else
             scope.launch { scaffoldState.bottomSheetState.hide() }
@@ -111,9 +112,11 @@ fun App(
             sheetPeekHeight = (handleHeight + peekHeight) * peekHeightMultiplier,
             modifier = Modifier.fillMaxSize(),
             sheetContent = {
-                state.stopState?.let { stopState ->
-                    StopInfoPanel(stopState) { peekHeight = it }
-                }
+                InfoPanel(
+                    state = infoState,
+                    onEvent = viewModel::handleEvent,
+                    onPeekHeightChange = { peekHeight = it },
+                )
             },
             sheetDragHandle = {
                 val density = LocalDensity.current
@@ -141,7 +144,6 @@ fun App(
                 polylines = state.polylines,
             )
             Searcher(
-                selectedRoute = state.routeState?.route,
                 routes = state.routes,
                 expanded = searchExpandedState,
                 onExpandedChange = {

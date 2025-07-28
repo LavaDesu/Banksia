@@ -4,10 +4,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dev.icerock.moko.geo.LocationTracker
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.launchIn
@@ -27,33 +25,24 @@ import moe.lava.banksia.native.maps.Marker
 import moe.lava.banksia.native.maps.MarkerType
 import moe.lava.banksia.native.maps.Point
 import moe.lava.banksia.native.maps.Polyline
+import moe.lava.banksia.ui.state.InfoPanelState
 import moe.lava.banksia.util.BoxedValue
 import moe.lava.banksia.util.BoxedValue.Companion.box
 
-data class RouteState(
-    val route: PtvRoute,
-    val stops: List<PtvStop>? = null,
-)
-
-data class StopState(
-    val stop: PtvStop,
-//    val departures: List<PtvDeparture>? = null,
-    val departures: List<Pair<String, String>>? = null,
-)
+sealed class BanksiaEvent {}
 
 data class BanksiaViewState(
-    val routeState: RouteState? = null,
-    val stopState: StopState? = null,
-
     val routes: List<PtvRoute> = listOf(),
-
     val markers: List<Marker> = listOf(),
     val polylines: List<Polyline> = listOf(),
 )
 
 class BanksiaViewModel : ViewModel() {
     private val iState = MutableStateFlow(BanksiaViewState())
-    val state: StateFlow<BanksiaViewState> = iState.asStateFlow()
+    val state = iState.asStateFlow()
+
+    private val iInfoState = MutableStateFlow<InfoPanelState>(InfoPanelState.None)
+    val infoState = iInfoState.asStateFlow()
 
     private val ptvService = PtvService()
     private var locationTrackerJob: Job? = null
@@ -67,6 +56,8 @@ class BanksiaViewModel : ViewModel() {
             requestRoutes()
         }
     }
+
+    fun handleEvent(event: BanksiaEvent) {}
 
     fun bindTracker(locationTracker: LocationTracker) {
         locationTrackerJob = locationTracker.getLocationsFlow()
@@ -98,36 +89,47 @@ class BanksiaViewModel : ViewModel() {
         iState.update { it.copy(routes = routes) }
     }
 
-    fun switchRoute(newRoute: PtvRoute?) {
-        val routeState = newRoute?.let { RouteState(it) }
-        if (iState.value.routeState == routeState)
-            return
-
+    fun switchRoute(route: PtvRoute?) {
         iState.update {
             it.copy(
-                routeState = routeState,
-                stopState = null,
                 markers = listOf(),
                 polylines = listOf(),
             )
         }
+        iInfoState.update {
+            if (route == null)
+                InfoPanelState.None
+            else
+                InfoPanelState.Route(
+                    name = route.routeName,
+                    type = route.routeType,
+                )
+        }
 
-        if (routeState != null) {
-            viewModelScope.launch {
-                async { buildPolylines() }
-                async { buildMarkers() }
-            }
+        if (route != null) {
+            viewModelScope.launch { buildPolylines(route) }
+            viewModelScope.launch { buildStops(route) }
+//            viewModelScope.launch { buildDepartures() }
+//            viewModelScope.launch { buildRuns() }
         }
     }
 
     // [TODO]: Cleanup
     suspend fun switchStop(stop: PtvStop?) {
-        iState.update { state ->
-            state.copy(stopState = stop?.let { StopState(it) })
-        }
-
-        if (stop == null)
+        if (stop == null) {
+            iInfoState.update { InfoPanelState.None }
             return
+        }
+        val split = stop.stopName.split("/")
+        val name = split[0]
+        val subname = split.getOrNull(1)
+        iInfoState.update {
+            InfoPanelState.Stop(
+                id = stop.stopId,
+                name = name,
+                subname = subname,
+            )
+        }
 
         val res = ptvService.departures(stop.routeType, stop.stopId)
         // Map<
@@ -155,18 +157,19 @@ class BanksiaViewModel : ViewModel() {
         }
         val departures = timetable.values.sortedBy { it.first }.map { (name, list) ->
             if (list.isEmpty())
-                Pair(name, "No departures")
+                InfoPanelState.Stop.Departure(name, "No departures")
             else
-                Pair(name, list.joinToString(" | "))
+                InfoPanelState.Stop.Departure(name, list.joinToString(" | "))
         }
-        iState.update {
-            it.copy(stopState = it.stopState?.copy(departures = departures))
+        iInfoState.update {
+            if (it !is InfoPanelState.Stop)
+                it
+            else
+                it.copy(departures = departures)
         }
     }
 
-    private suspend fun buildPolylines() {
-        val route = iState.value.routeState?.route ?: return
-
+    private suspend fun buildPolylines(route: PtvRoute) {
         val routeWithGeo = if (route.geopath.isEmpty())
             ptvService.route(route.routeId, true)
         else
@@ -198,9 +201,25 @@ class BanksiaViewModel : ViewModel() {
         newCameraPosition?.let { iCameraChangeEmitter.emit(it.box()) }
     }
 
-    private suspend fun buildMarkers() {
-        val route = iState.value.routeState?.route ?: return
+//    private suspend fun buildDepartures(route: PtvRoute) {
+//        val directions = ptvService.directionsByRoute(route.routeId)
+//
+//        iState.update {
+//            it.copy(routeState = it.routeState?.copy(directions = directions))
+//        }
+//    }
+//
+//    private suspend fun buildRuns() {
+//        val route = iState.value.routeState?.route ?: return
+//
+//        val directions = ptvService.directionsByRoute(route.routeId)
+//
+//        iState.update {
+//            it.copy(routeState = it.routeState?.copy(directions = directions))
+//        }
+//    }
 
+    private suspend fun buildStops(route: PtvRoute) {
         val stops = ptvService.stopsByRoute(route.routeId, route.routeType)
         val markers = mutableListOf<Marker>()
         val colour = route.routeType.getProperties().colour
@@ -222,12 +241,7 @@ class BanksiaViewModel : ViewModel() {
             }
         }
 
-        iState.update {
-            it.copy(
-                routeState = it.routeState?.copy(stops = stops),
-                markers = markers
-            )
-        }
+        iState.update { it.copy(markers = markers) }
     }
 
     private fun buildBounds(points: List<Point>): CameraPositionBounds {

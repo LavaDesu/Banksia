@@ -42,9 +42,10 @@ fun PtvRouteType.getProperties(): RouteTypeProperties {
     }
     return RouteTypeProperties(colour, drawable, background, icon)
 }
+
 @Composable
-fun PtvRouteType.ComposableIcon() {
-    val properties = this.getProperties()
+fun ComposableRouteIcon(routeType: PtvRouteType) {
+    val properties = routeType.getProperties()
     Image(
         painter = painterResource(properties.icon),
         contentDescription = null,
@@ -54,3 +55,6 @@ fun PtvRouteType.ComposableIcon() {
             }
     )
 }
+
+@Composable
+inline fun PtvRouteType.ComposableIcon() = ComposableRouteIcon(this)
