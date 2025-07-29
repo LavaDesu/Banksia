@@ -136,13 +136,13 @@ fun App(
         ) {
             Maps(
                 modifier = Modifier.fillMaxSize(),
+                state = mapState,
+                onEvent = viewModel::handleEvent,
                 cameraPositionFlow = viewModel.cameraChangeEmitter,
                 extInsets = WindowInsets(top = with(LocalDensity.current) {
                     SearchBarDefaults.InputFieldHeight.roundToPx()
                 }, bottom = extInsets),
-                markers = mapState.stops + mapState.vehicles,
                 setLastKnownLocation = viewModel::setLastKnownLocation,
-                polylines = mapState.polylines,
             )
             Searcher(
                 state = searchState,

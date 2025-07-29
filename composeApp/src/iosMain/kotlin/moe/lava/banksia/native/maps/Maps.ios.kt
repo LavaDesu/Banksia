@@ -7,6 +7,8 @@ import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalWindowInfo
 import kotlinx.coroutines.flow.Flow
+import moe.lava.banksia.ui.BanksiaEvent
+import moe.lava.banksia.ui.state.MapState
 import moe.lava.banksia.util.BoxedValue
 
 @OptIn(ExperimentalComposeUiApi::class)
@@ -19,8 +21,8 @@ actual fun getScreenHeight(): Int {
 @Composable
 actual fun Maps(
     modifier: Modifier,
-    markers: List<Marker>,
-    polylines: List<Polyline>,
+    state: MapState,
+    onEvent: (BanksiaEvent) -> Unit,
     cameraPositionFlow: Flow<BoxedValue<CameraPosition>>,
     setLastKnownLocation: (Point) -> Unit,
     extInsets: WindowInsets,

@@ -57,7 +57,8 @@ fun InfoPanel(
             when (state) {
                 is InfoPanelState.Route -> RouteInfoPanel(state, onEvent)
                 is InfoPanelState.Stop -> StopInfoPanel(state, onEvent)
-                else -> throw UnsupportedOperationException()
+                is InfoPanelState.Run -> RunInfoPanel(state, onEvent)
+                is InfoPanelState.None -> throw UnsupportedOperationException()
             }
 
             if (state.loading)
@@ -79,6 +80,24 @@ private inline fun RouteInfoPanel(
             ComposableRouteIcon(routeType = state.type)
             Text(
                 state.name,
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.SemiBold,
+                textAlign = TextAlign.Start
+            )
+        }
+    }
+}
+
+@Composable
+private inline fun RunInfoPanel(
+    state: InfoPanelState.Run,
+    onEvent: (BanksiaEvent) -> Unit,
+) {
+    Column(Modifier.fillMaxWidth()) {
+        Row {
+            ComposableRouteIcon(routeType = state.type)
+            Text(
+                "${state.direction} via ${state.routeName ?: "..."}",
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.SemiBold,
                 textAlign = TextAlign.Start

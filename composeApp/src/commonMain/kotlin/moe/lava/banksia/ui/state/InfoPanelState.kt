@@ -16,6 +16,14 @@ sealed class InfoPanelState {
         override val loading = false
     }
 
+    data class Run(
+        val direction: String,
+        val type: PtvRouteType,
+        val routeName: String? = null,
+    ) : InfoPanelState() {
+        override val loading = routeName == null
+    }
+
     data class Stop(
         val id: Int,
         val name: String,

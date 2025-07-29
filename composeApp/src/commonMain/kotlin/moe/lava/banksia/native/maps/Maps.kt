@@ -7,17 +7,25 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import kotlinx.coroutines.flow.Flow
 import moe.lava.banksia.api.ptv.structures.PtvRouteType
+import moe.lava.banksia.ui.BanksiaEvent
+import moe.lava.banksia.ui.state.MapState
 import moe.lava.banksia.util.BoxedValue
 
-data class Marker(
-    val point: Point,
-    val data: Data,
-    val onClick: () -> Boolean,
-) {
-    sealed class Data {
-        data class Stop(val colour: Color) : Data()
-        data class Vehicle(val type: PtvRouteType) : Data()
-    }
+sealed class Marker {
+    abstract val point: Point
+
+    data class Stop(
+        override val point: Point,
+        val id: Int,
+        val type: PtvRouteType,
+        val colour: Color,
+    ) : Marker()
+
+    data class Vehicle(
+        override val point: Point,
+        val ref: String,
+        val type: PtvRouteType,
+    ) : Marker()
 }
 data class Point(val lat: Double, val lng: Double)
 data class Polyline(val points: List<Point>, val colour: Color)
@@ -35,8 +43,8 @@ expect fun getScreenHeight(): Int
 @Composable
 expect fun Maps(
     modifier: Modifier = Modifier,
-    markers: List<Marker> = listOf(),
-    polylines: List<Polyline> = listOf(),
+    state: MapState,
+    onEvent: (BanksiaEvent) -> Unit,
     cameraPositionFlow: Flow<BoxedValue<CameraPosition>>,
     setLastKnownLocation: (Point) -> Unit,
     extInsets: WindowInsets,

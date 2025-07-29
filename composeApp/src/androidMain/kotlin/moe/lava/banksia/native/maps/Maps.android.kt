@@ -43,6 +43,8 @@ import kotlinx.coroutines.flow.Flow
 import moe.lava.banksia.R
 import moe.lava.banksia.api.ptv.structures.ComposableRouteIcon
 import moe.lava.banksia.native.BanksiaTheme
+import moe.lava.banksia.ui.BanksiaEvent
+import moe.lava.banksia.ui.state.MapState
 import moe.lava.banksia.util.BoxedValue
 import com.google.android.gms.maps.model.CameraPosition as GoogleCameraPosition
 
@@ -64,8 +66,8 @@ actual fun getScreenHeight(): Int {
 @Composable
 actual fun Maps(
     modifier: Modifier,
-    markers: List<Marker>,
-    polylines: List<Polyline>,
+    state: MapState,
+    onEvent: (BanksiaEvent) -> Unit,
     cameraPositionFlow: Flow<BoxedValue<CameraPosition>>,
     setLastKnownLocation: (Point) -> Unit,
     extInsets: WindowInsets,
@@ -115,33 +117,46 @@ actual fun Maps(
         contentPadding = WindowInsets.safeDrawing.add(extInsets).asPaddingValues()
     ) {
         // [TODO]: Slight lag when routes with many stops such as the 901 bus is set
-        for (marker in markers) {
+        for (marker in state.stops) {
             val state = rememberMarkerState()
             state.position = marker.point.toLatLng()
             MarkerComposable(
-                keys = arrayOf(marker.data),
-                zIndex = if (marker.data is Marker.Data.Vehicle) 1f else 0f,
+                keys = arrayOf(marker),
+                zIndex = 0f,
                 state = state,
-                onClick = { marker.onClick() }
-            ) {
-                when (marker.data) {
-                    is Marker.Data.Stop ->
-                        Box(
-                            modifier = Modifier
-                                .size(12.dp)
-                                .clip(CircleShape)
-                                .background(BanksiaTheme.colors.surface)
-                                .border(2.dp, marker.data.colour, CircleShape)
-                        )
-                    is Marker.Data.Vehicle ->
-                        ComposableRouteIcon(
-                            size = 30.dp,
-                            routeType = marker.data.type,
-                        )
+                onClick = {
+                    onEvent(BanksiaEvent.SelectStop(marker.type to marker.id))
+                    false
                 }
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(12.dp)
+                        .clip(CircleShape)
+                        .background(BanksiaTheme.colors.surface)
+                        .border(2.dp, marker.colour, CircleShape)
+                )
             }
         }
-        for (polyline in polylines) {
+        for (marker in state.vehicles) {
+            val state = rememberMarkerState()
+            state.position = marker.point.toLatLng()
+            MarkerComposable(
+                keys = arrayOf(marker),
+                zIndex = 1f,
+                state = state,
+                onClick = {
+                    onEvent(BanksiaEvent.SelectRun(marker.ref))
+                    false
+                }
+            ) {
+                ComposableRouteIcon(
+                    size = 30.dp,
+                    routeType = marker.type,
+                )
+            }
+        }
+        for (polyline in state.polylines) {
             Polyline(
                 points = polyline.points.map { it.toLatLng() },
                 color = polyline.colour

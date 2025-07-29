@@ -10,6 +10,9 @@ import io.ktor.client.request.get
 import io.ktor.client.request.parameter
 import io.ktor.http.appendPathSegments
 import io.ktor.serialization.kotlinx.json.json
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flow
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import moe.lava.banksia.Constants
@@ -44,12 +47,12 @@ object Responses {
     data class PtvDirectionsResponse(val directions: List<PtvDirection>)
 }
 
-
 class PtvService {
     class PtvCache(
         private val service: PtvService,
         private val directions: HashMap<Pair<Int, Int>, PtvDirection> = HashMap(),
         private val routes: HashMap<Int, PtvRoute> = HashMap(),
+        private val runs: HashMap<String, PtvRun> = HashMap(),
         private val stops: HashMap<Int, PtvStop> = HashMap(),
     ) {
         suspend fun direction(directionID: Int, routeID: Int): PtvDirection? {
@@ -79,6 +82,14 @@ class PtvService {
         }
 
         fun getStop(stopId: Int) = stops[stopId]
+
+        fun addRuns(runs: Iterable<PtvRun>) {
+            runs.forEach {
+                this.runs[it.runRef] = it
+            }
+        }
+
+        fun getRun(runRef: String) = runs[runRef]
     }
 
     val cache = PtvCache(this)
@@ -133,18 +144,42 @@ class PtvService {
         return response.routes
     }
 
-    suspend fun runs(routeId: Int): List<PtvRun> {
-        val response: Responses.PtvRunsResponse = client.get() {
-            url {
-                appendPathSegments(
-                    "runs",
-                    "route",
-                    routeId.toString(),
-                )
-                parameter("expand", "VehiclePosition")
-            }
-        }.body()
-        return response.runs
+    fun runFlow(ref: String, firstWithCache: Boolean = false, intervalMillis: Long = 5000): Flow<PtvRun> = flow {
+        val cached = cache.getRun(ref)
+        if (firstWithCache && cached != null)
+            emit(cached)
+
+        while (true) {
+            val response: Responses.PtvRunsResponse = client.get {
+                url {
+                    appendPathSegments(
+                        "runs",
+                        ref,
+                    )
+                }
+            }.body()
+            cache.addRuns(response.runs)
+            emit(response.runs[0])
+            delay(intervalMillis)
+        }
+    }
+
+    fun runsFlow(routeId: Int, intervalMillis: Long = 5000): Flow<List<PtvRun>> = flow {
+        while (true) {
+            val response: Responses.PtvRunsResponse = client.get {
+                url {
+                    appendPathSegments(
+                        "runs",
+                        "route",
+                        routeId.toString(),
+                    )
+                    parameter("expand", "VehiclePosition")
+                }
+            }.body()
+            cache.addRuns(response.runs)
+            emit(response.runs)
+            delay(intervalMillis)
+        }
     }
 
     suspend fun stopsByRoute(routeId: Int, routeType: PtvRouteType): List<PtvStop> {
