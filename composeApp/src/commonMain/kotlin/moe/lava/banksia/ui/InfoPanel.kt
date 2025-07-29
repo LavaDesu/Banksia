@@ -70,13 +70,13 @@ fun InfoPanel(
 }
 
 @Composable
-private fun RouteInfoPanel(
+private inline fun RouteInfoPanel(
     state: InfoPanelState.Route,
     onEvent: (BanksiaEvent) -> Unit,
 ) {
     Column(Modifier.fillMaxWidth()) {
         Row {
-            ComposableRouteIcon(state.type)
+            ComposableRouteIcon(routeType = state.type)
             Text(
                 state.name,
                 style = MaterialTheme.typography.titleLarge,
@@ -88,7 +88,7 @@ private fun RouteInfoPanel(
 }
 
 @Composable
-private fun StopInfoPanel(
+private inline fun StopInfoPanel(
     state: InfoPanelState.Stop,
     onEvent: (BanksiaEvent) -> Unit,
 ) {

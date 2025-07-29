@@ -6,17 +6,19 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import kotlinx.coroutines.flow.Flow
+import moe.lava.banksia.api.ptv.structures.PtvRouteType
 import moe.lava.banksia.util.BoxedValue
 
-enum class MarkerType {
-    GENERIC_STOP,
-}
 data class Marker(
     val point: Point,
-    val type: MarkerType,
-    val colour: Color,
-    val onClick: () -> Boolean
-)
+    val data: Data,
+    val onClick: () -> Boolean,
+) {
+    sealed class Data {
+        data class Stop(val colour: Color) : Data()
+        data class Vehicle(val type: PtvRouteType) : Data()
+    }
+}
 data class Point(val lat: Double, val lng: Double)
 data class Polyline(val points: List<Point>, val colour: Color)
 

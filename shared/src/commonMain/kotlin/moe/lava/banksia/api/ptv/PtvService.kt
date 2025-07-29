@@ -17,6 +17,7 @@ import moe.lava.banksia.api.ptv.structures.PtvDeparture
 import moe.lava.banksia.api.ptv.structures.PtvDirection
 import moe.lava.banksia.api.ptv.structures.PtvRoute
 import moe.lava.banksia.api.ptv.structures.PtvRouteType
+import moe.lava.banksia.api.ptv.structures.PtvRun
 import moe.lava.banksia.api.ptv.structures.PtvStop
 import moe.lava.banksia.log
 import okio.ByteString.Companion.encodeUtf8
@@ -27,6 +28,9 @@ object Responses {
     data class PtvRouteResponse(val route: PtvRoute)
     @Serializable
     data class PtvRoutesResponse(val routes: List<PtvRoute>)
+
+    @Serializable
+    data class PtvRunsResponse(val runs: List<PtvRun>)
 
     @Serializable
     data class PtvStopResponse(val stop: PtvStop)
@@ -127,6 +131,20 @@ class PtvService {
         val response: Responses.PtvRoutesResponse = client.get("routes").body()
         cache.setRoutes(response.routes)
         return response.routes
+    }
+
+    suspend fun runs(routeId: Int): List<PtvRun> {
+        val response: Responses.PtvRunsResponse = client.get() {
+            url {
+                appendPathSegments(
+                    "runs",
+                    "route",
+                    routeId.toString(),
+                )
+                parameter("expand", "VehiclePosition")
+            }
+        }.body()
+        return response.runs
     }
 
     suspend fun stopsByRoute(routeId: Int, routeType: PtvRouteType): List<PtvStop> {

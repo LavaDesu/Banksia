@@ -22,7 +22,6 @@ import moe.lava.banksia.log
 import moe.lava.banksia.native.maps.CameraPosition
 import moe.lava.banksia.native.maps.CameraPositionBounds
 import moe.lava.banksia.native.maps.Marker
-import moe.lava.banksia.native.maps.MarkerType
 import moe.lava.banksia.native.maps.Point
 import moe.lava.banksia.native.maps.Polyline
 import moe.lava.banksia.ui.state.InfoPanelState
@@ -32,6 +31,8 @@ import moe.lava.banksia.util.BoxedValue
 import moe.lava.banksia.util.BoxedValue.Companion.box
 
 sealed class BanksiaEvent {
+    data object DismissState : BanksiaEvent()
+
     data class SelectRoute(val id: Int?) : BanksiaEvent()
     data class SelectStop(val routeType: PtvRouteType, val stopId: Int?) : BanksiaEvent()
 
@@ -61,6 +62,7 @@ class BanksiaViewModel : ViewModel() {
     fun handleEvent(event: BanksiaEvent) {
         viewModelScope.launch {
             when (event) {
+                is BanksiaEvent.DismissState -> dismissState()
                 is BanksiaEvent.SelectRoute -> switchRoute(event.id)
                 is BanksiaEvent.SelectStop -> switchStop(event.routeType, event.stopId)
                 is BanksiaEvent.SearchUpdate -> searchUpdate(event.text)
@@ -85,6 +87,13 @@ class BanksiaViewModel : ViewModel() {
 
     fun setLastKnownLocation(location: Point) {
         lastKnownLocation = location
+    }
+
+    private fun dismissState() {
+        viewModelScope.launch {
+            switchRoute(null)
+            searchUpdate("")
+        }
     }
 
     private suspend fun searchUpdate(text: String) {
@@ -126,6 +135,7 @@ class BanksiaViewModel : ViewModel() {
         }
 
         viewModelScope.launch { buildPolylines(route) }
+        viewModelScope.launch { buildRuns(route) }
         viewModelScope.launch { buildStops(route) }
 //            viewModelScope.launch { buildDepartures() }
 //            viewModelScope.launch { buildRuns() }
@@ -219,6 +229,22 @@ class BanksiaViewModel : ViewModel() {
         newCameraPosition?.let { iCameraChangeEmitter.emit(it.box()) }
     }
 
+    private suspend fun buildRuns(route: PtvRoute) {
+        val runs = ptvService.runs(route.routeId)
+
+        val markers = runs.mapNotNull { it.vehiclePosition }
+            .distinctBy { it.latitude to it.longitude }
+            .map {
+                Marker(
+                    Point(it.latitude, it.longitude),
+                    onClick = { false },
+                    data = Marker.Data.Vehicle(route.routeType)
+                )
+            }
+
+        iMapState.update { it.copy(vehicles = markers) }
+    }
+
 //    private suspend fun buildDepartures(route: PtvRoute) {
 //        val directions = ptvService.directionsByRoute(route.routeId)
 //
@@ -239,27 +265,22 @@ class BanksiaViewModel : ViewModel() {
 
     private suspend fun buildStops(route: PtvRoute) {
         val stops = ptvService.stopsByRoute(route.routeId, route.routeType)
-        val markers = mutableListOf<Marker>()
         val colour = route.routeType.getProperties().colour
 
-        for (stop in stops) {
-            if (stop.stopLatitude != null && stop.stopLongitude != null) {
-                val pos = Point(stop.stopLatitude!!, stop.stopLongitude!!)
-
-                val marker = Marker(
-                    point = pos,
-                    type = MarkerType.GENERIC_STOP,
-                    colour = colour,
+        val markers = stops
+            .filter { it.stopLatitude != null && it.stopLongitude != null }
+            .map { stop ->
+                Marker(
+                    point = Point(stop.stopLatitude!!, stop.stopLongitude!!),
+                    data = Marker.Data.Stop(colour),
                     onClick = {
                         viewModelScope.launch { switchStop(route.routeType, stop.stopId) }
                         false
                     }
                 )
-                markers.add(marker)
             }
-        }
 
-        iMapState.update { it.copy(markers = markers) }
+        iMapState.update { it.copy(stops = markers) }
     }
 
     private fun buildBounds(points: List<Point>): CameraPositionBounds {

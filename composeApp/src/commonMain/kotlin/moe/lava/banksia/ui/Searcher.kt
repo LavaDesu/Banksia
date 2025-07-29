@@ -78,7 +78,7 @@ fun Searcher(
                         ListItem(
                             headlineContent = { Text(entry.mainText) },
                             supportingContent = { entry.subText?.let { Text(it) } },
-                            leadingContent = { ComposableRouteIcon(entry.routeType) },
+                            leadingContent = { ComposableRouteIcon(routeType = entry.routeType) },
                             colors = ListItemDefaults.colors(containerColor = Color.Transparent),
                             modifier = Modifier
                                 .fillMaxWidth()

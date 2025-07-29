@@ -47,6 +47,7 @@ import moe.lava.banksia.native.maps.Point
 import moe.lava.banksia.native.maps.getScreenHeight
 import moe.lava.banksia.resources.Res
 import moe.lava.banksia.resources.my_location_24
+import moe.lava.banksia.ui.BanksiaEvent
 import moe.lava.banksia.ui.BanksiaViewModel
 import moe.lava.banksia.ui.InfoPanel
 import moe.lava.banksia.ui.Searcher
@@ -139,7 +140,7 @@ fun App(
                 extInsets = WindowInsets(top = with(LocalDensity.current) {
                     SearchBarDefaults.InputFieldHeight.roundToPx()
                 }, bottom = extInsets),
-                markers = mapState.markers,
+                markers = mapState.stops + mapState.vehicles,
                 setLastKnownLocation = viewModel::setLastKnownLocation,
                 polylines = mapState.polylines,
             )
@@ -168,6 +169,7 @@ fun App(
                         scope.launch {
                             scaffoldState.bottomSheetState.hide()
                             peekHeightMultiplier = 1F
+                            viewModel.handleEvent(BanksiaEvent.DismissState)
                         }
                 } catch (_: CancellationException) {
                     peekHeightMultiplier = 1F

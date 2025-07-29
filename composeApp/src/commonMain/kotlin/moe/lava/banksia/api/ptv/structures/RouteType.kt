@@ -1,10 +1,15 @@
 package moe.lava.banksia.api.ptv.structures
 
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import moe.lava.banksia.resources.Res
 import moe.lava.banksia.resources.bus
@@ -18,6 +23,7 @@ import moe.lava.banksia.resources.tram_background
 import moe.lava.banksia.resources.tram_icon
 import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.painterResource
+import org.jetbrains.compose.ui.tooling.preview.Preview
 
 data class RouteTypeProperties(
     val colour: Color,
@@ -43,18 +49,37 @@ fun PtvRouteType.getProperties(): RouteTypeProperties {
     return RouteTypeProperties(colour, drawable, background, icon)
 }
 
+const val ICON_PADDING = 0.25f
+
+@Preview
 @Composable
-fun ComposableRouteIcon(routeType: PtvRouteType) {
+private fun RouteIconPreview() {
+    Row {
+        ComposableRouteIcon(routeType = PtvRouteType.TRAIN)
+        ComposableRouteIcon(routeType = PtvRouteType.TRAM)
+        ComposableRouteIcon(routeType = PtvRouteType.BUS)
+    }
+}
+
+@Composable
+fun ComposableRouteIcon(
+    modifier: Modifier = Modifier,
+    size: Dp = 40.dp,
+    routeType: PtvRouteType,
+) {
     val properties = routeType.getProperties()
     Image(
         painter = painterResource(properties.icon),
         contentDescription = null,
-        modifier = Modifier
+        modifier = modifier
+            .size(size)
+            .aspectRatio(1f)
+            .padding(size * ICON_PADDING / 2)
             .drawBehind {
-                drawCircle(properties.colour, radius = (this.size.minDimension + 10.dp.toPx()) / 2f)
+                drawCircle(properties.colour, radius = size.toPx() / 2f)
             }
     )
 }
 
 @Composable
-inline fun PtvRouteType.ComposableIcon() = ComposableRouteIcon(this)
+inline fun PtvRouteType.ComposableIcon(modifier: Modifier = Modifier) = ComposableRouteIcon(modifier, routeType = this)
