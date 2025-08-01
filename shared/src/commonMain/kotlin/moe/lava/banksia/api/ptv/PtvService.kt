@@ -6,13 +6,15 @@ import io.ktor.client.plugins.HttpSend
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.plugins.defaultRequest
 import io.ktor.client.plugins.plugin
+import io.ktor.client.request.HttpRequestBuilder
 import io.ktor.client.request.get
 import io.ktor.client.request.parameter
+import io.ktor.client.request.url
+import io.ktor.client.statement.HttpResponse
 import io.ktor.http.appendPathSegments
 import io.ktor.serialization.kotlinx.json.json
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.flow
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import moe.lava.banksia.Constants
@@ -22,7 +24,11 @@ import moe.lava.banksia.api.ptv.structures.PtvRoute
 import moe.lava.banksia.api.ptv.structures.PtvRouteType
 import moe.lava.banksia.api.ptv.structures.PtvRun
 import moe.lava.banksia.api.ptv.structures.PtvStop
+import moe.lava.banksia.error
 import moe.lava.banksia.log
+import moe.lava.banksia.util.CacheMap
+import moe.lava.banksia.util.LoopFlow.Companion.initWith
+import moe.lava.banksia.util.loopFlow
 import okio.ByteString.Companion.encodeUtf8
 import kotlin.random.Random
 
@@ -47,52 +53,22 @@ object Responses {
     data class PtvDirectionsResponse(val directions: List<PtvDirection>)
 }
 
-class PtvService {
+suspend inline fun <K, V> MutableMap<K, V>.getOrPutSuspend(key: K, defaultValue: suspend () -> V): V {
+    if (!containsKey(key))
+        this[key] = defaultValue()
+    return this[key]!!
+}
+
+class PtvService(coroutineScope: CoroutineScope) {
     class PtvCache(
-        private val service: PtvService,
-        private val directions: HashMap<Pair<Int, Int>, PtvDirection> = HashMap(),
-        private val routes: HashMap<Int, PtvRoute> = HashMap(),
-        private val runs: HashMap<String, PtvRun> = HashMap(),
-        private val stops: HashMap<Int, PtvStop> = HashMap(),
-    ) {
-        suspend fun direction(directionID: Int, routeID: Int): PtvDirection? {
-            val ret = directions[Pair(directionID, routeID)]
-            if (ret == null) {
-                val res = service.directionsByRoute(routeID)
-                for (dir in res)
-                    directions[Pair(dir.directionId, dir.routeId)] = dir
-            }
+        coroutineScope: CoroutineScope,
+        val directions: CacheMap<Pair<Int, Int>, PtvDirection> = CacheMap(coroutineScope),
+        val routes: CacheMap<Int, PtvRoute> = CacheMap(coroutineScope),
+        val runs: CacheMap<String, PtvRun> = CacheMap(coroutineScope),
+        val stops: CacheMap<Int, PtvStop> = CacheMap(coroutineScope),
+    )
 
-            return ret ?: directions[Pair(directionID, routeID)]
-        }
-
-        fun setRoutes(routes: Iterable<PtvRoute>) {
-            routes.forEach {
-                this.routes[it.routeId] = it
-            }
-        }
-
-        fun getRoute(routeId: Int) = routes[routeId]
-        fun getRoutes() = routes.values.toList()
-
-        fun addStops(stops: Iterable<PtvStop>) {
-            stops.forEach {
-                this.stops[it.stopId] = it
-            }
-        }
-
-        fun getStop(stopId: Int) = stops[stopId]
-
-        fun addRuns(runs: Iterable<PtvRun>) {
-            runs.forEach {
-                this.runs[it.runRef] = it
-            }
-        }
-
-        fun getRun(runRef: String) = runs[runRef]
-    }
-
-    val cache = PtvCache(this)
+    val cache = PtvCache(coroutineScope)
 
     private val client = HttpClient() {
         install(ContentNegotiation) {
@@ -105,7 +81,7 @@ class PtvService {
         }
     }
 
-    constructor() {
+    init {
         client.plugin(HttpSend).intercept { req ->
             req.parameter("devid", Constants.devid)
             @OptIn(ExperimentalStdlibApi::class)
@@ -118,137 +94,149 @@ class PtvService {
         }
     }
 
+    suspend fun HttpClient.safeGet(
+        urlString: String? = null,
+        retries: Int = 1,
+        block: (HttpRequestBuilder.() -> Unit)? = null
+    ): HttpResponse =
+        runCatching {
+            get {
+                urlString?.let { url(it) }
+                block?.invoke(this)
+            }
+        }.getOrElse { e ->
+            error("PtvService", "Fetch error occurred (attempt $retries / 3), retrying in 5000ms...", e)
+            if (retries >= 3)
+                throw e
+            delay(5000)
+            safeGet(urlString, retries + 1, block)
+        }
+
     suspend fun route(id: Int, includeGeopath: Boolean = false): PtvRoute {
-        val cached = cache.getRoute(id)
+        val cached = cache.routes[id]
         // TODO: im braindead so clean this up later
         if (cached != null && (!includeGeopath || (includeGeopath && cached.geopath.isNotEmpty())))
             return cached
 
-        val response: Responses.PtvRouteResponse = client.get("routes") {
-            url {
-                appendPathSegments(id.toString())
-                parameters.append("include_geopath", if (includeGeopath) "true" else "false")
+        return client
+            .safeGet("routes") {
+                url {
+                    appendPathSegments(id.toString())
+                    parameters.append("include_geopath", if (includeGeopath) "true" else "false")
+                }
             }
-        }.body()
-        cache.setRoutes(listOf(response.route))
-        return response.route
+            .body<Responses.PtvRouteResponse>()
+            .route
+            .also { cache.routes[it.routeId] = it }
     }
 
     suspend fun routes(): List<PtvRoute> {
-        val cached = cache.getRoutes()
-        if (cached.isNotEmpty())
-            return cached
-
-        val response: Responses.PtvRoutesResponse = client.get("routes").body()
-        cache.setRoutes(response.routes)
-        return response.routes
+        val cached = cache.routes
+        if (cached.isEmpty()) {
+            client
+                .safeGet("routes")
+                .body<Responses.PtvRoutesResponse>()
+                .routes
+                .forEach { route ->
+                    cached[route.routeId] = route
+                }
+        }
+        return cached.values.toList()
     }
 
-    fun runFlow(ref: String, firstWithCache: Boolean = false, intervalMillis: Long = 5000): Flow<PtvRun> = flow {
-        val cached = cache.getRun(ref)
-        if (firstWithCache && cached != null)
-            emit(cached)
+    fun runFlow(ref: String, firstWithCache: Boolean = false) =
+        loopFlow {
+            client
+                .safeGet {
+                    url {
+                        appendPathSegments("runs", ref)
+                    }
+                }
+                .body<Responses.PtvRunsResponse>()
+                .runs
+                .also { it.forEach { run -> cache.runs[run.runRef] = run } }
+                .let { emit(it[0]) }
+        }.initWith {
+            cache.runs[ref]?.let {
+                if (firstWithCache)
+                    emit(it)
+            }
+        }
 
-        while (true) {
-            val response: Responses.PtvRunsResponse = client.get {
+    fun runsFlow(routeId: Int) =
+        loopFlow {
+            client
+                .safeGet {
+                    url {
+                        appendPathSegments("runs", "route", routeId.toString())
+                        parameter("expand", "VehiclePosition")
+                    }
+                }
+                .body<Responses.PtvRunsResponse>()
+                .runs
+                .also { it.forEach { run -> cache.runs[run.runRef] = run } }
+                .let { emit(it) }
+        }
+
+    suspend fun stopsByRoute(routeId: Int, routeType: PtvRouteType): List<PtvStop> =
+        client
+            .safeGet("stops") {
                 url {
                     appendPathSegments(
-                        "runs",
-                        ref,
+                        "route", routeId.toString(),
+                        "route_type", routeType.ordinal.toString(),
                     )
                 }
-            }.body()
-            cache.addRuns(response.runs)
-            emit(response.runs[0])
-            delay(intervalMillis)
-        }
-    }
+            }
+            .body<Responses.PtvStopsResponse>()
+            .stops
+            .also { it.forEach { stop -> cache.stops[stop.stopId] = stop } }
 
-    fun runsFlow(routeId: Int, intervalMillis: Long = 5000): Flow<List<PtvRun>> = flow {
-        while (true) {
-            val response: Responses.PtvRunsResponse = client.get {
+    suspend fun stop(routeType: PtvRouteType, stopId: Int): PtvStop =
+        cache.stops.getOrPutSuspend(stopId) {
+            client
+                .safeGet {
+                    url {
+                        appendPathSegments(
+                            "stops", stopId.toString(),
+                            "route_type", routeType.ordinal.toString(),
+                        )
+                    }
+                }
+                .body<Responses.PtvStopResponse>()
+                .stop
+        }
+
+    suspend fun directionsByRoute(routeId: Int): List<PtvDirection> =
+        client
+            .safeGet("directions") {
                 url {
-                    appendPathSegments(
-                        "runs",
-                        "route",
-                        routeId.toString(),
-                    )
-                    parameter("expand", "VehiclePosition")
+                    appendPathSegments("route", routeId.toString())
                 }
-            }.body()
-            cache.addRuns(response.runs)
-            emit(response.runs)
-            delay(intervalMillis)
+            }
+            .body<Responses.PtvDirectionsResponse>()
+            .directions
+
+    suspend fun direction(directionId: Int, routeId: Int): PtvDirection {
+        if (!cache.directions.containsKey(directionId to routeId)) {
+            val directions = directionsByRoute(routeId)
+            for (direction in directions)
+                cache.directions[direction.directionId to direction.routeId] = direction
         }
-    }
 
-    suspend fun stopsByRoute(routeId: Int, routeType: PtvRouteType): List<PtvStop> {
-        val response: Responses.PtvStopsResponse = client.get("stops") {
-            url {
-                appendPathSegments(
-                    "route",
-                    routeId.toString(),
-                    "route_type",
-                    routeType.ordinal.toString()
-                )
-            }
-        }.body()
-        val stops = response.stops
-        cache.addStops(stops)
-        return stops
-    }
-
-    suspend fun stop(routeType: PtvRouteType, stopId: Int): PtvStop {
-        val cached = cache.getStop(stopId)
-        if (cached != null)
-            return cached
-
-        val response: Responses.PtvStopResponse = client.get() {
-            url {
-                appendPathSegments(
-                    "stops",
-                    stopId.toString(),
-                    "route_type",
-                    routeType.ordinal.toString(),
-                )
-            }
-        }.body()
-        val stop = response.stop
-        cache.addStops(listOf(stop))
-        return stop
-    }
-
-    suspend fun directionsByRoute(routeId: Int): List<PtvDirection> {
-        val response: Responses.PtvDirectionsResponse = client.get("directions") {
-            url {
-                appendPathSegments("route", routeId.toString())
-            }
-        }.body()
-        return response.directions
-    }
-
-    suspend fun direction(id: Int, routeType: PtvRouteType?): List<PtvDirection> {
-        val response: Responses.PtvDirectionsResponse = client.get("directions") {
-            url {
-                appendPathSegments(id.toString())
-                if (routeType != null)
-                    appendPathSegments("route_type", routeType.ordinal.toString())
-            }
-        }.body()
-        return response.directions
+        return cache.directions[directionId to routeId]!!
     }
 
     suspend fun departures(routeType: PtvRouteType, stopId: Int): Responses.PtvDeparturesResponse =
-        client.get("departures") {
-            url {
-                appendPathSegments(
-                    "route_type",
-                    routeType.ordinal.toString(),
-                    "stop",
-                    stopId.toString()
-                )
-                parameter("expand", "Route")
-                parameter("expand", "Direction")
-            }
-        }.body()
+        client
+            .safeGet ("departures") {
+                url {
+                    appendPathSegments(
+                        "route_type", routeType.ordinal.toString(),
+                        "stop", stopId.toString(),
+                    )
+                    parameter("expand", "Route")
+                    parameter("expand", "Direction")
+                }
+            }.body()
 }

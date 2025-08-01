@@ -12,7 +12,6 @@ import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.takeWhile
 import kotlinx.coroutines.flow.update
-import kotlinx.coroutines.flow.updateAndGet
 import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
@@ -31,6 +30,7 @@ import moe.lava.banksia.ui.state.MapState
 import moe.lava.banksia.ui.state.SearchState
 import moe.lava.banksia.util.BoxedValue
 import moe.lava.banksia.util.BoxedValue.Companion.box
+import moe.lava.banksia.util.LoopFlow.Companion.waitUntilSubscribed
 
 sealed class BanksiaEvent {
     data object DismissState : BanksiaEvent()
@@ -72,7 +72,7 @@ class BanksiaViewModel : ViewModel() {
     private val iSearchState = MutableStateFlow(SearchState())
     val searchState = iSearchState.asStateFlow()
 
-    private val ptvService = PtvService()
+    private val ptvService = PtvService(viewModelScope)
     private var locationTrackerJob: Job? = null
     private var lastKnownLocation: Point? = null
 
@@ -84,9 +84,9 @@ class BanksiaViewModel : ViewModel() {
         viewModelScope.launch {
             when (event) {
                 is BanksiaEvent.DismissState -> dismissState()
-                is BanksiaEvent.SelectRoute -> switchRoute(event.id)
-                is BanksiaEvent.SelectRun -> switchRun(event.ref)
-                is BanksiaEvent.SelectStop -> switchStop(event.typeAndId)
+                is BanksiaEvent.SelectRoute -> state = InternalState(route = event.id)
+                is BanksiaEvent.SelectRun -> state = state.copy(run = event.ref)
+                is BanksiaEvent.SelectStop -> state = state.copy(stop = event.typeAndId)
                 is BanksiaEvent.SearchUpdate -> searchUpdate(event.text)
             }
         }
@@ -167,13 +167,14 @@ class BanksiaViewModel : ViewModel() {
             return
         }
 
-        var lastState = iInfoState.value
+        val lastState = state.run
         var routeName: String? = null
         ptvService.runFlow(ref, firstWithCache = true)
-            .takeWhile { lastState == iInfoState.value }
+            .waitUntilSubscribed(iInfoState)
+            .takeWhile { lastState == state.run }
             .onEach { run ->
                 if (routeName == null) {
-                    lastState = iInfoState.updateAndGet {
+                    iInfoState.update {
                         InfoPanelState.Run(
                             direction = run.destinationName,
                             type = run.routeType,
@@ -182,7 +183,7 @@ class BanksiaViewModel : ViewModel() {
                     routeName = ptvService.route(run.routeId).routeName
                 }
 
-                lastState = iInfoState.updateAndGet {
+                iInfoState.update {
                     InfoPanelState.Run(
                         direction = run.destinationName,
                         type = run.routeType,
@@ -220,7 +221,7 @@ class BanksiaViewModel : ViewModel() {
         val timetable = HashMap<Pair<Int, Int>, Pair<String, MutableList<String>>>()
         res.departures.forEach { dep ->
             val key = Pair(dep.directionId, dep.routeId)
-            val direction = ptvService.cache.direction(dep.directionId, dep.routeId) ?: return@forEach
+            val direction = ptvService.direction(dep.directionId, dep.routeId)
             val route = res.routes[dep.routeId.toString()]
             val prefix = route?.let { if (it.routeNumber == "") "" else "${it.routeNumber} - " } ?: ""
             val element = timetable.getOrPut(key) { Pair(prefix + direction.directionName, mutableListOf()) }.second
@@ -282,12 +283,11 @@ class BanksiaViewModel : ViewModel() {
         newCameraPosition?.let { iCameraChangeEmitter.emit(it.box()) }
     }
 
-    var runsRouteKey: Int? = null
     private fun buildRuns(route: PtvRoute) {
-        runsRouteKey = route.routeId
         ptvService
             .runsFlow(route.routeId)
-            .takeWhile { route.routeId == runsRouteKey }
+            .waitUntilSubscribed(iInfoState)
+            .takeWhile { state.route == route.routeId }
             .onEach { runs ->
                 val markers = runs
                     .filter { it.vehiclePosition != null }
