@@ -85,8 +85,8 @@ class BanksiaViewModel : ViewModel() {
             when (event) {
                 is BanksiaEvent.DismissState -> dismissState()
                 is BanksiaEvent.SelectRoute -> state = InternalState(route = event.id)
-                is BanksiaEvent.SelectRun -> state = state.copy(run = event.ref)
-                is BanksiaEvent.SelectStop -> state = state.copy(stop = event.typeAndId)
+                is BanksiaEvent.SelectRun -> state = state.copy(run = event.ref, stop = null)
+                is BanksiaEvent.SelectStop -> state = state.copy(stop = event.typeAndId, run = null)
                 is BanksiaEvent.SearchUpdate -> searchUpdate(event.text)
             }
         }
@@ -112,10 +112,8 @@ class BanksiaViewModel : ViewModel() {
     }
 
     private fun dismissState() {
-        viewModelScope.launch {
-            switchRoute(null)
-            searchUpdate("")
-        }
+        state = InternalState()
+        viewModelScope.launch { searchUpdate("") }
     }
 
     private suspend fun searchUpdate(text: String) {
