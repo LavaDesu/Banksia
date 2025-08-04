@@ -7,7 +7,7 @@ plugins {
 group = "moe.lava.banksia"
 version = "1.0.0"
 application {
-    mainClass.set("moe.lava.banksia.ApplicationKt")
+    mainClass.set("moe.lava.banksia.server.ApplicationKt")
     applicationDefaultJvmArgs = listOf("-Dio.ktor.development=${extra["io.ktor.development"] ?: "false"}")
 }
 

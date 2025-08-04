@@ -1,4 +1,4 @@
-package moe.lava.banksia.ui
+package moe.lava.banksia.ui.layout
 
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.foundation.clickable
@@ -23,7 +23,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
-import moe.lava.banksia.api.ptv.structures.ComposableRouteIcon
+import moe.lava.banksia.ui.BanksiaEvent
+import moe.lava.banksia.ui.components.RouteIcon
 import moe.lava.banksia.ui.state.SearchState
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -43,16 +44,16 @@ fun Searcher(
         label = "padding"
     )
 
-    Box(modifier = Modifier.fillMaxSize()) {
+    Box(modifier = Modifier.Companion.fillMaxSize()) {
         SearchBar(
-            modifier = Modifier
-                .align(Alignment.TopCenter)
+            modifier = Modifier.Companion
+                .align(Alignment.Companion.TopCenter)
                 .fillMaxWidth()
                 .padding(horizontal = animatedPadding),
             shadowElevation = 6.dp, // Elevation level 3
             inputField = {
                 SearchBarDefaults.InputField(
-                    modifier = Modifier.padding(horizontal = 20.dp - animatedPadding),
+                    modifier = Modifier.Companion.padding(horizontal = 20.dp - animatedPadding),
                     query = state.text,
                     onQueryChange = { onEvent(BanksiaEvent.SearchUpdate(it)) },
                     onSearch = {},
@@ -64,7 +65,13 @@ fun Searcher(
                             Icon(
                                 imageVector = Icons.Default.Clear,
                                 contentDescription = null,
-                                modifier = Modifier.clickable { onEvent(BanksiaEvent.SearchUpdate("")) }
+                                modifier = Modifier.Companion.clickable {
+                                    onEvent(
+                                        BanksiaEvent.SearchUpdate(
+                                            ""
+                                        )
+                                    )
+                                }
                             )
                     }
                 )
@@ -72,15 +79,15 @@ fun Searcher(
             expanded = expanded,
             onExpandedChange = onExpandedChange,
         ) {
-            LazyColumn(modifier = Modifier.fillMaxWidth()) {
+            LazyColumn(modifier = Modifier.Companion.fillMaxWidth()) {
                 for (entry in state.entries) {
                     item {
                         ListItem(
                             headlineContent = { Text(entry.mainText) },
                             supportingContent = { entry.subText?.let { Text(it) } },
-                            leadingContent = { ComposableRouteIcon(routeType = entry.routeType) },
-                            colors = ListItemDefaults.colors(containerColor = Color.Transparent),
-                            modifier = Modifier
+                            leadingContent = { RouteIcon(routeType = entry.routeType) },
+                            colors = ListItemDefaults.colors(containerColor = Color.Companion.Transparent),
+                            modifier = Modifier.Companion
                                 .fillMaxWidth()
                                 .padding(horizontal = 16.dp, vertical = 4.dp)
                                 .clickable {

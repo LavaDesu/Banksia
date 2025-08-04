@@ -1,4 +1,4 @@
-package moe.lava.banksia.native.maps
+package moe.lava.banksia.ui.platform.maps
 
 import android.Manifest
 import android.content.pm.PackageManager
@@ -41,12 +41,11 @@ import com.google.maps.android.compose.rememberCameraPositionState
 import com.google.maps.android.compose.rememberMarkerState
 import kotlinx.coroutines.flow.Flow
 import moe.lava.banksia.R
-import moe.lava.banksia.api.ptv.structures.ComposableRouteIcon
-import moe.lava.banksia.native.BanksiaTheme
 import moe.lava.banksia.ui.BanksiaEvent
+import moe.lava.banksia.ui.components.RouteIcon
+import moe.lava.banksia.ui.platform.BanksiaTheme
 import moe.lava.banksia.ui.state.MapState
 import moe.lava.banksia.util.BoxedValue
-import com.google.android.gms.maps.model.CameraPosition as GoogleCameraPosition
 
 fun Point.toLatLng(): LatLng = LatLng(this.lat, this.lng)
 
@@ -94,19 +93,30 @@ actual fun Maps(
     LaunchedEffect(Unit) {
         fusedLocation.lastLocation.addOnSuccessListener {
             if (it != null) {
-                camPos.position = GoogleCameraPosition(LatLng(it.latitude, it.longitude), 16.0f, 0.0f, 0.0f)
+                camPos.position = com.google.android.gms.maps.model.CameraPosition(
+                    LatLng(
+                        it.latitude,
+                        it.longitude
+                    ), 16.0f, 0.0f, 0.0f
+                )
                 setLastKnownLocation(Point(it.latitude, it.longitude))
             }
         }
     }
 
     GoogleMap(
-        modifier = Modifier.fillMaxSize(),
+        modifier = Modifier.Companion.fillMaxSize(),
         cameraPositionState = camPos,
-        mapColorScheme = if (isSystemInDarkTheme()) { ComposeMapColorScheme.DARK } else {
-            ComposeMapColorScheme.LIGHT },
+        mapColorScheme = if (isSystemInDarkTheme()) {
+            ComposeMapColorScheme.DARK
+        } else {
+            ComposeMapColorScheme.LIGHT
+        },
         properties = DefaultMapProperties.copy(
-            mapStyleOptions = MapStyleOptions.loadRawResourceStyle(LocalContext.current, R.raw.def_mapstyle),
+            mapStyleOptions = MapStyleOptions.loadRawResourceStyle(
+                LocalContext.current,
+                R.raw.def_mapstyle
+            ),
             isMyLocationEnabled = checkLocationPermission(),
         ),
         uiSettings = DefaultMapUiSettings.copy(
@@ -114,7 +124,7 @@ actual fun Maps(
             myLocationButtonEnabled = false,
             mapToolbarEnabled = false,
         ),
-        contentPadding = WindowInsets.safeDrawing.add(extInsets).asPaddingValues()
+        contentPadding = WindowInsets.Companion.safeDrawing.add(extInsets).asPaddingValues()
     ) {
         // [TODO]: Slight lag when routes with many stops such as the 901 bus is set
         for (marker in state.stops) {
@@ -130,7 +140,7 @@ actual fun Maps(
                 }
             ) {
                 Box(
-                    modifier = Modifier
+                    modifier = Modifier.Companion
                         .size(12.dp)
                         .clip(CircleShape)
                         .background(BanksiaTheme.colors.surface)
@@ -150,7 +160,7 @@ actual fun Maps(
                     false
                 }
             ) {
-                ComposableRouteIcon(
+                RouteIcon(
                     size = 30.dp,
                     routeType = marker.type,
                 )

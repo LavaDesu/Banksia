@@ -1,4 +1,4 @@
-package moe.lava.banksia
+package moe.lava.banksia.ui
 
 import androidx.compose.ui.window.ComposeUIViewController
 

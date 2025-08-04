@@ -18,19 +18,19 @@ import kotlinx.datetime.Instant
 import moe.lava.banksia.api.ptv.PtvService
 import moe.lava.banksia.api.ptv.structures.PtvRoute
 import moe.lava.banksia.api.ptv.structures.PtvRouteType
-import moe.lava.banksia.api.ptv.structures.getProperties
-import moe.lava.banksia.log
-import moe.lava.banksia.native.maps.CameraPosition
-import moe.lava.banksia.native.maps.CameraPositionBounds
-import moe.lava.banksia.native.maps.Marker
-import moe.lava.banksia.native.maps.Point
-import moe.lava.banksia.native.maps.Polyline
+import moe.lava.banksia.ui.components.getUIProperties
+import moe.lava.banksia.ui.platform.maps.CameraPosition
+import moe.lava.banksia.ui.platform.maps.CameraPositionBounds
+import moe.lava.banksia.ui.platform.maps.Marker
+import moe.lava.banksia.ui.platform.maps.Point
+import moe.lava.banksia.ui.platform.maps.Polyline
 import moe.lava.banksia.ui.state.InfoPanelState
 import moe.lava.banksia.ui.state.MapState
 import moe.lava.banksia.ui.state.SearchState
 import moe.lava.banksia.util.BoxedValue
 import moe.lava.banksia.util.BoxedValue.Companion.box
 import moe.lava.banksia.util.LoopFlow.Companion.waitUntilSubscribed
+import moe.lava.banksia.util.log
 
 sealed class BanksiaEvent {
     data object DismissState : BanksiaEvent()
@@ -256,7 +256,7 @@ class BanksiaViewModel : ViewModel() {
             ptvService.route(route.routeId, true)
         else
             route
-        val colour = routeWithGeo.routeType.getProperties().colour
+        val colour = routeWithGeo.routeType.getUIProperties().colour
 
         val polylines = mutableListOf<Polyline>()
         val allPoints = mutableListOf<Point>()
@@ -309,7 +309,7 @@ class BanksiaViewModel : ViewModel() {
 
     private suspend fun buildStops(route: PtvRoute) {
         val stops = ptvService.stopsByRoute(route.routeId, route.routeType)
-        val colour = route.routeType.getProperties().colour
+        val colour = route.routeType.getUIProperties().colour
 
         val markers = stops
             .filter { it.stopLatitude != null && it.stopLongitude != null }

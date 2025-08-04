@@ -1,4 +1,4 @@
-package moe.lava.banksia
+package moe.lava.banksia.ui
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.WindowInsets
@@ -41,19 +41,16 @@ import dev.icerock.moko.geo.compose.BindLocationTrackerEffect
 import dev.icerock.moko.geo.compose.LocationTrackerAccuracy
 import dev.icerock.moko.geo.compose.rememberLocationTrackerFactory
 import kotlinx.coroutines.launch
-import moe.lava.banksia.native.BanksiaTheme
-import moe.lava.banksia.native.maps.Maps
-import moe.lava.banksia.native.maps.Point
-import moe.lava.banksia.native.maps.getScreenHeight
 import moe.lava.banksia.resources.Res
 import moe.lava.banksia.resources.my_location_24
-import moe.lava.banksia.ui.BanksiaEvent
-import moe.lava.banksia.ui.BanksiaViewModel
-import moe.lava.banksia.ui.InfoPanel
-import moe.lava.banksia.ui.Searcher
+import moe.lava.banksia.ui.layout.InfoPanel
+import moe.lava.banksia.ui.layout.Searcher
+import moe.lava.banksia.ui.platform.BanksiaTheme
+import moe.lava.banksia.ui.platform.maps.Maps
+import moe.lava.banksia.ui.platform.maps.Point
+import moe.lava.banksia.ui.platform.maps.getScreenHeight
 import moe.lava.banksia.ui.state.InfoPanelState
 import org.jetbrains.compose.resources.painterResource
-import org.jetbrains.compose.ui.tooling.preview.Preview
 import kotlin.coroutines.cancellation.CancellationException
 import kotlin.math.roundToInt
 
@@ -61,7 +58,6 @@ val MELBOURNE = Point(-37.8136, 144.9631)
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalComposeUiApi::class)
 @Composable
-@Preview
 fun App(
     viewModel: BanksiaViewModel = viewModel()
 ) {
@@ -91,7 +87,8 @@ fun App(
     ) {
         val offset = runCatching { sheetState.requireOffset() }
         val scaffoldOffset = offset.getOrDefault(0.0f).roundToInt()
-        (getScreenHeight() - scaffoldOffset - WindowInsets.safeDrawing.getBottom(LocalDensity.current)).coerceAtLeast(0)
+        (getScreenHeight() - scaffoldOffset - WindowInsets.Companion.safeDrawing.getBottom(
+            LocalDensity.current)).coerceAtLeast(0)
     } else 0
 
     LaunchedEffect(infoState) {
@@ -111,7 +108,7 @@ fun App(
         BottomSheetScaffold(
             scaffoldState = scaffoldState,
             sheetPeekHeight = (handleHeight + peekHeight) * peekHeightMultiplier,
-            modifier = Modifier.fillMaxSize(),
+            modifier = Modifier.Companion.fillMaxSize(),
             sheetContent = {
                 InfoPanel(
                     state = infoState,
@@ -122,20 +119,20 @@ fun App(
             sheetDragHandle = {
                 val density = LocalDensity.current
                 Box(
-                    Modifier
+                    Modifier.Companion
                         .fillMaxWidth()
                         .padding(horizontal = 10.dp)
                         .onSizeChanged {
                             handleHeight = with(density) { it.height.toDp() }
                         }
                 ) {
-                    BottomSheetDefaults.DragHandle(modifier = Modifier.align(Alignment.Center))
+                    BottomSheetDefaults.DragHandle(modifier = Modifier.Companion.align(Alignment.Companion.Center))
                 }
             },
             sheetSwipeEnabled = sheetSwipeEnabled,
         ) {
             Maps(
-                modifier = Modifier.fillMaxSize(),
+                modifier = Modifier.Companion.fillMaxSize(),
                 state = mapState,
                 onEvent = viewModel::handleEvent,
                 cameraPositionFlow = viewModel.cameraChangeEmitter,
@@ -178,8 +175,12 @@ fun App(
             }
 
             Box(
-                Modifier.windowInsetsPadding(WindowInsets.safeContent.add(WindowInsets(bottom = extInsets))),
-                contentAlignment = Alignment.BottomEnd
+                Modifier.Companion.windowInsetsPadding(
+                    WindowInsets.Companion.safeContent.add(
+                        WindowInsets(bottom = extInsets)
+                    )
+                ),
+                contentAlignment = Alignment.Companion.BottomEnd
             ) {
                 FloatingActionButton(
                     containerColor = MaterialTheme.colorScheme.surfaceContainer,

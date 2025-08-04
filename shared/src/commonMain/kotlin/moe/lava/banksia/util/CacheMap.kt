@@ -3,7 +3,6 @@ package moe.lava.banksia.util
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import moe.lava.banksia.error
 
 class CacheMap<K, V>(
     coroutineScope: CoroutineScope,

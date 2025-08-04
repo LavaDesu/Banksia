@@ -7,7 +7,6 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.FlowCollector
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
-import moe.lava.banksia.log
 import kotlin.experimental.ExperimentalTypeInference
 
 @OptIn(ExperimentalCoroutinesApi::class)

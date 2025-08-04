@@ -1,4 +1,4 @@
-package moe.lava.banksia
+package moe.lava.banksia.util
 
 actual fun log(tag: String, msg: String) {
     println("[$tag] $msg")

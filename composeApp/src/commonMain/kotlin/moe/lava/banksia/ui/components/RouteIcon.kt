@@ -1,4 +1,4 @@
-package moe.lava.banksia.api.ptv.structures
+package moe.lava.banksia.ui.components
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Row
@@ -11,6 +11,7 @@ import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import moe.lava.banksia.api.ptv.structures.PtvRouteType
 import moe.lava.banksia.resources.Res
 import moe.lava.banksia.resources.bus
 import moe.lava.banksia.resources.bus_background
@@ -31,7 +32,8 @@ data class RouteTypeProperties(
     val background: DrawableResource,
     val icon: DrawableResource,
 )
-fun PtvRouteType.getProperties(): RouteTypeProperties {
+
+fun PtvRouteType.getUIProperties(): RouteTypeProperties {
     val colour = when (this) {
         PtvRouteType.TRAIN -> Color(0xFF0072CE)
         PtvRouteType.TRAM -> Color(0xFF78BE20)
@@ -40,34 +42,25 @@ fun PtvRouteType.getProperties(): RouteTypeProperties {
     }
     val (drawable, background, icon) = when (this) {
         PtvRouteType.TRAM -> Triple(
-            Res.drawable.tram, Res.drawable.tram_background, Res.drawable.tram_icon)
+            Res.drawable.tram, Res.drawable.tram_background, Res.drawable.tram_icon
+        )
         PtvRouteType.TRAIN, PtvRouteType.VLINE -> Triple(
-            Res.drawable.train, Res.drawable.train_background, Res.drawable.train_icon)
+            Res.drawable.train, Res.drawable.train_background, Res.drawable.train_icon
+        )
         PtvRouteType.BUS, PtvRouteType.NIGHT_BUS -> Triple(
-            Res.drawable.bus, Res.drawable.bus_background, Res.drawable.bus_icon)
+            Res.drawable.bus, Res.drawable.bus_background, Res.drawable.bus_icon
+        )
     }
     return RouteTypeProperties(colour, drawable, background, icon)
 }
 
-const val ICON_PADDING = 0.25f
-
-@Preview
 @Composable
-private fun RouteIconPreview() {
-    Row {
-        ComposableRouteIcon(routeType = PtvRouteType.TRAIN)
-        ComposableRouteIcon(routeType = PtvRouteType.TRAM)
-        ComposableRouteIcon(routeType = PtvRouteType.BUS)
-    }
-}
-
-@Composable
-fun ComposableRouteIcon(
-    modifier: Modifier = Modifier,
+fun RouteIcon(
+    modifier: Modifier = Modifier.Companion,
     size: Dp = 40.dp,
     routeType: PtvRouteType,
 ) {
-    val properties = routeType.getProperties()
+    val properties = routeType.getUIProperties()
     Image(
         painter = painterResource(properties.icon),
         contentDescription = null,
@@ -81,5 +74,15 @@ fun ComposableRouteIcon(
     )
 }
 
+const val ICON_PADDING = 0.25f
+
+@Preview
 @Composable
-inline fun PtvRouteType.ComposableIcon(modifier: Modifier = Modifier) = ComposableRouteIcon(modifier, routeType = this)
+private fun RouteIconPreview() {
+    Row {
+        RouteIcon(routeType = PtvRouteType.TRAIN)
+        RouteIcon(routeType = PtvRouteType.TRAM)
+        RouteIcon(routeType = PtvRouteType.BUS)
+    }
+}
+

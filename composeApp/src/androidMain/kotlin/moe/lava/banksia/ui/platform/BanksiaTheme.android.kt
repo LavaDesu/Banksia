@@ -1,4 +1,4 @@
-package moe.lava.banksia.native
+package moe.lava.banksia.ui.platform
 
 import android.os.Build
 import androidx.compose.material3.ColorScheme

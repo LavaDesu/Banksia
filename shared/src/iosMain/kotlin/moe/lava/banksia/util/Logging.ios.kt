@@ -1,4 +1,4 @@
-package moe.lava.banksia
+package moe.lava.banksia.util
 
 actual fun log(tag: String, msg: String) {
     TODO("Not yet implemented")

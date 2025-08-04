@@ -1,4 +1,4 @@
-package moe.lava.banksia
+package moe.lava.banksia.server
 
 import io.ktor.server.application.Application
 import io.ktor.server.engine.embeddedServer

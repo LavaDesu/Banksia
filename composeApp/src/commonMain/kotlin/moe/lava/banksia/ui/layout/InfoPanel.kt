@@ -1,4 +1,4 @@
-package moe.lava.banksia.ui
+package moe.lava.banksia.ui.layout
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -29,7 +29,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.coerceAtMost
 import androidx.compose.ui.unit.dp
-import moe.lava.banksia.api.ptv.structures.ComposableRouteIcon
+import moe.lava.banksia.ui.BanksiaEvent
+import moe.lava.banksia.ui.components.RouteIcon
 import moe.lava.banksia.ui.state.InfoPanelState
 
 @Composable
@@ -44,7 +45,7 @@ fun InfoPanel(
     val localDensity = LocalDensity.current
 
     Column(
-        Modifier
+        Modifier.Companion
             .fillMaxWidth()
             .padding(horizontal = 24.dp)
             .heightIn(max = 250.dp)
@@ -63,10 +64,10 @@ fun InfoPanel(
 
             if (state.loading)
                 CircularProgressIndicator(
-                    modifier = Modifier.width(32.dp).align(Alignment.CenterEnd)
+                    modifier = Modifier.Companion.width(32.dp).align(Alignment.Companion.CenterEnd)
                 )
         }
-        Spacer(Modifier.windowInsetsBottomHeight(WindowInsets.safeContent))
+        Spacer(Modifier.Companion.windowInsetsBottomHeight(WindowInsets.Companion.safeContent))
     }
 }
 
@@ -75,14 +76,14 @@ private inline fun RouteInfoPanel(
     state: InfoPanelState.Route,
     onEvent: (BanksiaEvent) -> Unit,
 ) {
-    Column(Modifier.fillMaxWidth()) {
+    Column(Modifier.Companion.fillMaxWidth()) {
         Row {
-            ComposableRouteIcon(routeType = state.type)
+            RouteIcon(routeType = state.type)
             Text(
                 state.name,
                 style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.SemiBold,
-                textAlign = TextAlign.Start
+                fontWeight = FontWeight.Companion.SemiBold,
+                textAlign = TextAlign.Companion.Start
             )
         }
     }
@@ -93,14 +94,14 @@ private inline fun RunInfoPanel(
     state: InfoPanelState.Run,
     onEvent: (BanksiaEvent) -> Unit,
 ) {
-    Column(Modifier.fillMaxWidth()) {
+    Column(Modifier.Companion.fillMaxWidth()) {
         Row {
-            ComposableRouteIcon(routeType = state.type)
+            RouteIcon(routeType = state.type)
             Text(
                 "${state.direction} via ${state.routeName ?: "..."}",
                 style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.SemiBold,
-                textAlign = TextAlign.Start
+                fontWeight = FontWeight.Companion.SemiBold,
+                textAlign = TextAlign.Companion.Start
             )
         }
     }
@@ -111,29 +112,38 @@ private inline fun StopInfoPanel(
     state: InfoPanelState.Stop,
     onEvent: (BanksiaEvent) -> Unit,
 ) {
-    Column(Modifier.fillMaxWidth()) {
+    Column(Modifier.Companion.fillMaxWidth()) {
         Text(
             state.name,
             style = MaterialTheme.typography.titleLarge,
-            fontWeight = FontWeight.SemiBold,
-            textAlign = TextAlign.Start
+            fontWeight = FontWeight.Companion.SemiBold,
+            textAlign = TextAlign.Companion.Start
         )
         state.subname?.let {
             Text(
                 "/ $it",
-                modifier = Modifier.padding(start = 5.dp),
+                modifier = Modifier.Companion.padding(start = 5.dp),
                 style = MaterialTheme.typography.titleSmall,
-                color = Color.Gray,
-                fontWeight = FontWeight.SemiBold,
-                textAlign = TextAlign.Start
+                color = Color.Companion.Gray,
+                fontWeight = FontWeight.Companion.SemiBold,
+                textAlign = TextAlign.Companion.Start
             )
         }
         state.departures?.let {
-            Spacer(Modifier.height(5.dp))
+            Spacer(Modifier.Companion.height(5.dp))
             it.forEach { (name, formatted) ->
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(name, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
-                    Text(formatted, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.padding(horizontal = 5.dp))
+                Row(verticalAlignment = Alignment.Companion.CenterVertically) {
+                    Text(
+                        name,
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Companion.SemiBold
+                    )
+                    Text(
+                        formatted,
+                        maxLines = 1,
+                        overflow = TextOverflow.Companion.Ellipsis,
+                        modifier = Modifier.Companion.padding(horizontal = 5.dp)
+                    )
                 }
             }
         }

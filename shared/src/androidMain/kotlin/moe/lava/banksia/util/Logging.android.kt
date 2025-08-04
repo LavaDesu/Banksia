@@ -1,4 +1,4 @@
-package moe.lava.banksia
+package moe.lava.banksia.util
 
 import android.util.Log
 
