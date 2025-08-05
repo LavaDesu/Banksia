@@ -1,7 +1,8 @@
 package moe.lava.banksia.ui.platform.maps
 
 import androidx.compose.ui.graphics.Color
-import moe.lava.banksia.api.ptv.structures.PtvRouteType
+import moe.lava.banksia.data.ptv.structures.PtvRouteType
+import moe.lava.banksia.util.Point
 
 sealed class Marker {
     abstract val point: Point

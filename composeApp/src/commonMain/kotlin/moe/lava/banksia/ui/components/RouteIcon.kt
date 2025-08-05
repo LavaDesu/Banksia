@@ -11,7 +11,7 @@ import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import moe.lava.banksia.api.ptv.structures.PtvRouteType
+import moe.lava.banksia.data.ptv.structures.PtvRouteType
 import moe.lava.banksia.resources.Res
 import moe.lava.banksia.resources.bus
 import moe.lava.banksia.resources.bus_background

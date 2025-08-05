@@ -1,6 +1,6 @@
 package moe.lava.banksia.ui.state
 
-import moe.lava.banksia.api.ptv.structures.PtvRouteType
+import moe.lava.banksia.data.ptv.structures.PtvRouteType
 
 sealed class InfoPanelState {
     abstract val loading: Boolean

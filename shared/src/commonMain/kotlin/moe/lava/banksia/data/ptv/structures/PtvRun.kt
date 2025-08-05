@@ -1,4 +1,4 @@
-package moe.lava.banksia.api.ptv.structures
+package moe.lava.banksia.data.ptv.structures
 
 import kotlinx.datetime.Instant
 import kotlinx.datetime.LocalDateTime

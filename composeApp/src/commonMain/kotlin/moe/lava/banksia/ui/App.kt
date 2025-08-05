@@ -47,9 +47,9 @@ import moe.lava.banksia.ui.layout.InfoPanel
 import moe.lava.banksia.ui.layout.Searcher
 import moe.lava.banksia.ui.platform.BanksiaTheme
 import moe.lava.banksia.ui.platform.maps.Maps
-import moe.lava.banksia.ui.platform.maps.Point
 import moe.lava.banksia.ui.platform.maps.getScreenHeight
 import moe.lava.banksia.ui.state.InfoPanelState
+import moe.lava.banksia.util.Point
 import org.jetbrains.compose.resources.painterResource
 import kotlin.coroutines.cancellation.CancellationException
 import kotlin.math.roundToInt

@@ -1,3 +1,3 @@
-package moe.lava.banksia.ui.platform.maps
+package moe.lava.banksia.util
 
 data class Point(val lat: Double, val lng: Double)

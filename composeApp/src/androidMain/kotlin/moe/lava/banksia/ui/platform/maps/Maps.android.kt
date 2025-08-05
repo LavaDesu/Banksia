@@ -46,6 +46,7 @@ import moe.lava.banksia.ui.components.RouteIcon
 import moe.lava.banksia.ui.platform.BanksiaTheme
 import moe.lava.banksia.ui.state.MapState
 import moe.lava.banksia.util.BoxedValue
+import moe.lava.banksia.util.Point
 
 fun Point.toLatLng(): LatLng = LatLng(this.lat, this.lng)
 

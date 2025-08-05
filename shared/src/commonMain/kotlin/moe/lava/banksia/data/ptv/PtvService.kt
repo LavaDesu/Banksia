@@ -1,4 +1,4 @@
-package moe.lava.banksia.api.ptv
+package moe.lava.banksia.data.ptv
 
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
@@ -18,12 +18,12 @@ import kotlinx.coroutines.delay
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import moe.lava.banksia.Constants
-import moe.lava.banksia.api.ptv.structures.PtvDeparture
-import moe.lava.banksia.api.ptv.structures.PtvDirection
-import moe.lava.banksia.api.ptv.structures.PtvRoute
-import moe.lava.banksia.api.ptv.structures.PtvRouteType
-import moe.lava.banksia.api.ptv.structures.PtvRun
-import moe.lava.banksia.api.ptv.structures.PtvStop
+import moe.lava.banksia.data.ptv.structures.PtvDeparture
+import moe.lava.banksia.data.ptv.structures.PtvDirection
+import moe.lava.banksia.data.ptv.structures.PtvRoute
+import moe.lava.banksia.data.ptv.structures.PtvRouteType
+import moe.lava.banksia.data.ptv.structures.PtvRun
+import moe.lava.banksia.data.ptv.structures.PtvStop
 import moe.lava.banksia.util.CacheMap
 import moe.lava.banksia.util.LoopFlow.Companion.initWith
 import moe.lava.banksia.util.error

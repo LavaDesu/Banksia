@@ -10,6 +10,7 @@ import kotlinx.coroutines.flow.Flow
 import moe.lava.banksia.ui.BanksiaEvent
 import moe.lava.banksia.ui.state.MapState
 import moe.lava.banksia.util.BoxedValue
+import moe.lava.banksia.util.Point
 
 @OptIn(ExperimentalComposeUiApi::class)
 @Composable
