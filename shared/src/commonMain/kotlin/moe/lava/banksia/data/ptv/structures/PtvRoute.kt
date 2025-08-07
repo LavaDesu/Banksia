@@ -2,18 +2,7 @@ package moe.lava.banksia.data.ptv.structures
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
-
-// Ordinals used for sorting in searcher
-enum class GtfsSubType(val value: Int) {
-    MetroTrain(2),
-    MetroTram(3),
-    MetroBus(4),
-    RegionalTrain(1),
-    RegionalCoach(5),
-    RegionalBus(6),
-    SkyBus(11),
-    Interstate(10),
-}
+import moe.lava.banksia.model.RouteType
 
 @Serializable
 data class PtvRoute(
@@ -24,13 +13,8 @@ data class PtvRoute(
     @SerialName("route_gtfs_id") val routeGtfsId: String,
     @SerialName("geopath") val geopath: List<PtvGeopath>,
 ) {
-    fun gtfsSubType(): GtfsSubType? {
-        GtfsSubType.entries.forEach {
-            if (routeGtfsId.startsWith(it.value.toString()))
-                return it
-        }
-        return null
-    }
+    fun gtfsSubType(): RouteType =
+        RouteType.entries.first { routeGtfsId.startsWith(it.value.toString() + "-") }
 
     fun getShortFullName(): String {
         var res = ""
