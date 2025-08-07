@@ -16,7 +16,11 @@ kotlin {
             jvmTarget.set(JvmTarget.JVM_11)
         }
     }
-    
+
+    compilerOptions {
+        freeCompilerArgs.add("-opt-in=kotlin.time.ExperimentalTime")
+    }
+
     listOf(
         iosX64(),
         iosArm64(),

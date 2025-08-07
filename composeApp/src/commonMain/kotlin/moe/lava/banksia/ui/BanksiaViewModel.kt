@@ -13,8 +13,6 @@ import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.takeWhile
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import kotlinx.datetime.Clock
-import kotlinx.datetime.Instant
 import moe.lava.banksia.data.ptv.PtvService
 import moe.lava.banksia.data.ptv.structures.PtvRoute
 import moe.lava.banksia.data.ptv.structures.PtvRouteType
@@ -31,6 +29,8 @@ import moe.lava.banksia.util.BoxedValue.Companion.box
 import moe.lava.banksia.util.LoopFlow.Companion.waitUntilSubscribed
 import moe.lava.banksia.util.Point
 import moe.lava.banksia.util.log
+import kotlin.time.Clock
+import kotlin.time.Instant
 
 sealed class BanksiaEvent {
     data object DismissState : BanksiaEvent()

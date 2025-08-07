@@ -1,6 +1,5 @@
 package moe.lava.banksia.data.ptv.structures
 
-import kotlinx.datetime.Instant
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toInstant
@@ -12,6 +11,7 @@ import kotlinx.serialization.descriptors.PrimitiveSerialDescriptor
 import kotlinx.serialization.descriptors.SerialDescriptor
 import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
+import kotlin.time.Instant
 
 // Some datetimes are in local time (no timezone), observed on bus vehicle positions,
 // and some datetimes are in UTC, observed on train vehicle positions. We need to handle

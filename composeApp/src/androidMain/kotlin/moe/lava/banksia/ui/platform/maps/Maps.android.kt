@@ -38,7 +38,7 @@ import com.google.maps.android.compose.GoogleMap
 import com.google.maps.android.compose.MarkerComposable
 import com.google.maps.android.compose.Polyline
 import com.google.maps.android.compose.rememberCameraPositionState
-import com.google.maps.android.compose.rememberMarkerState
+import com.google.maps.android.compose.rememberUpdatedMarkerState
 import kotlinx.coroutines.flow.Flow
 import moe.lava.banksia.R
 import moe.lava.banksia.ui.BanksiaEvent
@@ -129,8 +129,7 @@ actual fun Maps(
     ) {
         // [TODO]: Slight lag when routes with many stops such as the 901 bus is set
         for (marker in state.stops) {
-            val state = rememberMarkerState()
-            state.position = marker.point.toLatLng()
+            val state = rememberUpdatedMarkerState(marker.point.toLatLng())
             MarkerComposable(
                 keys = arrayOf(marker),
                 zIndex = 0f,
@@ -150,8 +149,7 @@ actual fun Maps(
             }
         }
         for (marker in state.vehicles) {
-            val state = rememberMarkerState()
-            state.position = marker.point.toLatLng()
+            val state = rememberUpdatedMarkerState(marker.point.toLatLng())
             MarkerComposable(
                 keys = arrayOf(marker),
                 zIndex = 1f,
