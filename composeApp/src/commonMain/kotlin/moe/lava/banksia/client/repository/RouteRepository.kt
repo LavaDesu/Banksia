@@ -1,5 +1,7 @@
 package moe.lava.banksia.client.repository
 
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import moe.lava.banksia.client.datasource.local.RouteLocalDataSource
 import moe.lava.banksia.client.datasource.remote.RouteRemoteDataSource
 
@@ -7,7 +9,8 @@ class RouteRepository(
     private val local: RouteLocalDataSource,
     private val remote: RouteRemoteDataSource,
 ) {
-    suspend fun getAll() =
+    private val mutex = Mutex()
+    suspend fun getAll() = mutex.withLock {
         local
             .getAll()
             .map { it.asModel() }
@@ -16,6 +19,7 @@ class RouteRepository(
                     .getAll()
                     .also { local.save(*it.toTypedArray()) }
             }
+    }
 
-    suspend fun get(id: String) = local.get(id)?.asModel() ?: remote.get(id)
+    suspend fun get(id: String) = mutex.withLock { local.get(id)?.asModel() ?: remote.get(id) }
 }
