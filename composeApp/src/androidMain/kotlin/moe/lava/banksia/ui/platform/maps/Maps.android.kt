@@ -41,9 +41,9 @@ import com.google.maps.android.compose.rememberCameraPositionState
 import com.google.maps.android.compose.rememberUpdatedMarkerState
 import kotlinx.coroutines.flow.Flow
 import moe.lava.banksia.R
-import moe.lava.banksia.ui.BanksiaEvent
 import moe.lava.banksia.ui.components.RouteIcon
 import moe.lava.banksia.ui.platform.BanksiaTheme
+import moe.lava.banksia.ui.screens.MapScreenEvent
 import moe.lava.banksia.ui.state.MapState
 import moe.lava.banksia.util.BoxedValue
 import moe.lava.banksia.util.Point
@@ -67,7 +67,7 @@ actual fun getScreenHeight(): Int {
 actual fun Maps(
     modifier: Modifier,
     state: MapState,
-    onEvent: (BanksiaEvent) -> Unit,
+    onEvent: (MapScreenEvent) -> Unit,
     cameraPositionFlow: Flow<BoxedValue<CameraPosition>>,
     setLastKnownLocation: (Point) -> Unit,
     extInsets: WindowInsets,
@@ -135,7 +135,7 @@ actual fun Maps(
                 zIndex = 0f,
                 state = state,
                 onClick = {
-                    onEvent(BanksiaEvent.SelectStop(marker.type to marker.id))
+                    onEvent(MapScreenEvent.SelectStop(marker.type to marker.id))
                     false
                 }
             ) {
@@ -155,7 +155,7 @@ actual fun Maps(
                 zIndex = 1f,
                 state = state,
                 onClick = {
-                    onEvent(BanksiaEvent.SelectRun(marker.ref))
+                    onEvent(MapScreenEvent.SelectRun(marker.ref))
                     false
                 }
             ) {

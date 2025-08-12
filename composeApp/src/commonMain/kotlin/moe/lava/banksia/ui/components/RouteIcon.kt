@@ -12,6 +12,15 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import moe.lava.banksia.data.ptv.structures.PtvRouteType
+import moe.lava.banksia.model.RouteType
+import moe.lava.banksia.model.RouteType.Interstate
+import moe.lava.banksia.model.RouteType.MetroBus
+import moe.lava.banksia.model.RouteType.MetroTrain
+import moe.lava.banksia.model.RouteType.MetroTram
+import moe.lava.banksia.model.RouteType.RegionalBus
+import moe.lava.banksia.model.RouteType.RegionalCoach
+import moe.lava.banksia.model.RouteType.RegionalTrain
+import moe.lava.banksia.model.RouteType.SkyBus
 import moe.lava.banksia.resources.Res
 import moe.lava.banksia.resources.bus
 import moe.lava.banksia.resources.bus_background
@@ -33,12 +42,51 @@ data class RouteTypeProperties(
     val icon: DrawableResource,
 )
 
+const val TRAIN_BLUE = 0xFF0072CE
+const val TRAM_GREEN = 0xFF78BE20
+const val BUS_ORANGE = 0xFFFF8200
+const val VLINE_PURPLE = 0xFF8F1A95
+
+fun RouteType.getUIProperties(): RouteTypeProperties {
+    val colour = when (this) {
+        MetroTrain -> TRAIN_BLUE
+        MetroTram -> TRAM_GREEN
+        MetroBus -> BUS_ORANGE
+        RegionalTrain -> VLINE_PURPLE
+        RegionalCoach -> VLINE_PURPLE
+        RegionalBus -> VLINE_PURPLE
+        SkyBus -> BUS_ORANGE
+        Interstate -> BUS_ORANGE
+    }
+
+    val (drawable, background, icon) = when (this) {
+        MetroTrain,
+        RegionalTrain,
+        Interstate -> Triple(
+            Res.drawable.train, Res.drawable.train_background, Res.drawable.train_icon
+        )
+
+        MetroTram -> Triple(
+            Res.drawable.tram, Res.drawable.tram_background, Res.drawable.tram_icon
+        )
+
+        MetroBus,
+        RegionalCoach,
+        RegionalBus,
+        SkyBus -> Triple(
+            Res.drawable.bus, Res.drawable.bus_background, Res.drawable.bus_icon
+        )
+    }
+
+    return RouteTypeProperties(Color(colour), drawable, background, icon)
+}
+
 fun PtvRouteType.getUIProperties(): RouteTypeProperties {
     val colour = when (this) {
-        PtvRouteType.TRAIN -> Color(0xFF0072CE)
-        PtvRouteType.TRAM -> Color(0xFF78BE20)
-        PtvRouteType.BUS, PtvRouteType.NIGHT_BUS -> Color(0xFFFF8200)
-        PtvRouteType.VLINE -> Color(0xFF8F1A95)
+        PtvRouteType.TRAIN -> Color(TRAIN_BLUE)
+        PtvRouteType.TRAM -> Color(TRAM_GREEN)
+        PtvRouteType.BUS, PtvRouteType.NIGHT_BUS -> Color(BUS_ORANGE)
+        PtvRouteType.VLINE -> Color(VLINE_PURPLE)
     }
     val (drawable, background, icon) = when (this) {
         PtvRouteType.TRAM -> Triple(
@@ -58,7 +106,7 @@ fun PtvRouteType.getUIProperties(): RouteTypeProperties {
 fun RouteIcon(
     modifier: Modifier = Modifier.Companion,
     size: Dp = 40.dp,
-    routeType: PtvRouteType,
+    routeType: RouteType,
 ) {
     val properties = routeType.getUIProperties()
     Image(
@@ -80,9 +128,9 @@ const val ICON_PADDING = 0.25f
 @Composable
 private fun RouteIconPreview() {
     Row {
-        RouteIcon(routeType = PtvRouteType.TRAIN)
-        RouteIcon(routeType = PtvRouteType.TRAM)
-        RouteIcon(routeType = PtvRouteType.BUS)
+        RouteIcon(routeType = RouteType.MetroTrain)
+        RouteIcon(routeType = RouteType.MetroTram)
+        RouteIcon(routeType = RouteType.MetroBus)
     }
 }
 

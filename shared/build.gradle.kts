@@ -37,6 +37,7 @@ kotlin {
 
     sourceSets {
         androidMain.dependencies {
+            implementation(libs.koin.compose)
             implementation(libs.ktor.client.okhttp)
         }
         commonMain.dependencies {
@@ -48,6 +49,7 @@ kotlin {
             implementation(libs.kotlinx.coroutines.core)
             implementation(libs.kotlinx.datetime)
             implementation(libs.kotlinx.serialization.json)
+            implementation(libs.kotlinx.serialization.protobuf)
             implementation(libs.room.runtime)
             implementation(libs.sqlite.bundled)
         }

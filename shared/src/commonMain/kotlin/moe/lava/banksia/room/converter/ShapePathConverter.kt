@@ -4,7 +4,7 @@ import androidx.room.TypeConverter
 import moe.lava.banksia.model.ShapePath
 import moe.lava.banksia.util.Point
 
-object ShapeConverter {
+object ShapePathConverter {
     @TypeConverter
     fun from(value: ByteArray): ShapePath {
         return value

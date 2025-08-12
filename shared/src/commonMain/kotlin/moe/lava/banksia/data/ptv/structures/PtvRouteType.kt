@@ -7,6 +7,7 @@ import kotlinx.serialization.descriptors.PrimitiveSerialDescriptor
 import kotlinx.serialization.descriptors.SerialDescriptor
 import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
+import moe.lava.banksia.model.RouteType
 
 private object PtvRouteTypeSerialiser : KSerializer<PtvRouteType> {
     override val descriptor: SerialDescriptor = PrimitiveSerialDescriptor(
@@ -30,4 +31,20 @@ enum class PtvRouteType {
     BUS,
     VLINE,
     NIGHT_BUS,
+    ;
+
+    companion object {
+        fun fromModel(type: RouteType) = when (type) {
+            RouteType.MetroTrain -> TRAIN
+            RouteType.MetroTram -> TRAM
+            RouteType.MetroBus -> BUS
+            RouteType.RegionalTrain -> VLINE
+            RouteType.RegionalCoach -> BUS
+            RouteType.RegionalBus -> BUS
+            RouteType.SkyBus -> BUS
+            RouteType.Interstate -> TRAIN
+        }
+
+        fun RouteType.asPtvType() = fromModel(this)
+    }
 }

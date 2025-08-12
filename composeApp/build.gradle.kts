@@ -41,6 +41,7 @@ kotlin {
             implementation(libs.play.services.location)
             implementation(libs.play.services.maps)
             implementation(libs.maps.compose)
+            implementation(libs.maps.compose.utils)
         }
         commonMain.dependencies {
             implementation(compose.runtime)
@@ -53,8 +54,13 @@ kotlin {
             implementation(libs.androidx.lifecycle.viewmodel)
             implementation(libs.androidx.lifecycle.viewmodel.compose)
             implementation(libs.androidx.lifecycle.runtime.compose)
+            implementation(libs.koin.compose)
+            implementation(libs.koin.compose.viewmodel)
             implementation(libs.kotlinx.coroutines.core)
             implementation(libs.kotlinx.datetime)
+            implementation(libs.ktor.client.core)
+            implementation(libs.ktor.client.contentnegotiation)
+            implementation(libs.ktor.serialization.kotlinx.json)
             implementation(libs.moko.geo)
             implementation(libs.moko.geo.compose)
             implementation(projects.shared)

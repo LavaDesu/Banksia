@@ -12,12 +12,18 @@ import io.ktor.utils.io.copyAndClose
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.modules.EmptySerializersModule
 import moe.lava.banksia.model.Route
-import moe.lava.banksia.model.RouteType
 import moe.lava.banksia.model.Shape
-import moe.lava.banksia.room.dao.RouteDao
-import moe.lava.banksia.room.dao.ShapeDao
+import moe.lava.banksia.model.Stop
+import moe.lava.banksia.model.StopTime
+import moe.lava.banksia.model.Trip
+import moe.lava.banksia.room.Database
+import moe.lava.banksia.room.converter.RouteTypeConverter
+import moe.lava.banksia.room.entity.asEntity
 import moe.lava.banksia.server.gtfs.structures.GtfsRoute
 import moe.lava.banksia.server.gtfs.structures.GtfsShape
+import moe.lava.banksia.server.gtfs.structures.GtfsStop
+import moe.lava.banksia.server.gtfs.structures.GtfsStopTime
+import moe.lava.banksia.server.gtfs.structures.GtfsTrip
 import moe.lava.banksia.util.Point
 import java.io.File
 import java.util.zip.ZipFile
@@ -25,9 +31,7 @@ import java.util.zip.ZipFile
 class GtfsHandler(
     private val log: Logger,
     private val client: HttpClient,
-
-    private val routeDao: RouteDao,
-    private val shapeDao: ShapeDao,
+    private val db: Database,
 ) {
     private val csv = CsvFormat(StringDeferringConfig(EmptySerializersModule()))
     private val datasetPath = File("/tmp/banksia", "dataset.zip")
@@ -49,27 +53,30 @@ class GtfsHandler(
         }
 
         log.info("extracting...")
-        val files = extractAll(datasetPath)
+//        val files = extractAll(datasetPath)
+        val files = datasetPath.parentFile
+            .listFiles { it.isDirectory }
+            .flatMap { d -> d.listFiles { f -> f.extension == "txt" }.toList() }
 
+        addRoutes(files)
+        addStops(files)
+        addShapes(files)
+        addTrips(files)
+        addStopTimes(files)
+
+        log.info("done!")
+    }
+
+    private suspend fun addRoutes(files: List<File>) {
+        val dao = db.routeDao
         log.info("parsing routes...")
         val routes = files
             .filter { it.name == "routes.txt" }
             .flatMap { fd -> parseRoutes(fd) }
 
         log.info("inserting routes...")
-        routeDao.deleteAll()
-        routeDao.insertAll(*routes.toTypedArray())
-
-        log.info("parsing shapes...")
-        val shapes = files
-            .filter { it.name == "shapes.txt" }
-            .flatMap { fd -> parseShapes(fd) }
-
-        log.info("inserting shapes...")
-        shapeDao.deleteAll()
-        shapeDao.insertAll(*shapes.toTypedArray())
-
-        log.info("done!")
+        dao.deleteAll()
+        dao.insertAll(*routes.map { it.asEntity() }.toTypedArray())
     }
 
     private fun parseRoutes(fd: File) =
@@ -77,11 +84,23 @@ class GtfsHandler(
             .map { with(it) {
                 Route(
                     id = route_id,
-                    type = RouteType.from(fd.parentFile.name.toInt()),
+                    type = RouteTypeConverter.from(fd.parentFile.name.toInt()),
                     number = route_short_name,
                     name = route_long_name,
                 )
             } }
+
+    private suspend fun addShapes(files: List<File>) {
+        val dao = db.shapeDao
+        log.info("parsing shapes...")
+        val shapes = files
+            .filter { it.name == "shapes.txt" }
+            .flatMap { fd -> parseShapes(fd) }
+
+        log.info("inserting shapes...")
+        dao.deleteAll()
+        dao.insertAll(*shapes.map { it.asEntity() }.toTypedArray())
+    }
 
     private fun parseShapes(fd: File) =
         fd.parseCsv<GtfsShape>()
@@ -94,6 +113,95 @@ class GtfsHandler(
                 Shape(id, points)
             }
 
+    private suspend fun addStops(files: List<File>) {
+        val dao = db.stopDao
+        log.info("parsing stops...")
+        val stops = files
+            .filter { it.name == "stops.txt" }
+            .flatMap { fd -> parseStops(fd) }
+
+        log.info("inserting stops...")
+        dao.deleteAll()
+        stops
+            .groupBy { it.id }
+            .forEach { (id, gstops) ->
+                if (gstops.size > 1) {
+//                    if (gstops.withIndex().any { (i, stop) -> i != 0 && stop == gstops[i - 1] })
+                    gstops.forEach {
+                        log.info("duplicate $id: $it")
+                    }
+                }
+            }
+        dao.insertOrReplaceAll(*stops.map { it.asEntity() }.toTypedArray())
+    }
+
+    private fun parseStops(fd: File) =
+        fd.parseCsv<GtfsStop>()
+            .map { with(it) {
+                Stop(
+                    id = stop_id,
+                    name = stop_name,
+                    pos = Point(stop_lat, stop_lon),
+                    parent = parent_station,
+                    hasWheelChairBoarding = wheelchair_boarding == "1",
+                    level = level_id,
+                    platformCode = platform_code,
+                )
+            } }
+
+    private suspend fun addStopTimes(files: List<File>) {
+        val dao = db.stopTimeDao
+        log.info("parsing stop times...")
+        val stopTimes = files
+            .filter { it.name == "stop_times.txt" }
+            .flatMap { fd -> parseStopTimes(fd) }
+
+        log.info("inserting stop times...")
+        dao.deleteAll()
+        dao.insertOrReplaceAll(*stopTimes.map { it.asEntity() }.toTypedArray())
+    }
+
+    private fun parseStopTimes(fd: File) =
+        fd.parseCsv<GtfsStopTime>()
+            .map { with(it) {
+                StopTime(
+                    tripId = trip_id,
+                    stopId = stop_id,
+                    arrivalTime = GtfsStopTime.parseGtfsTime(arrival_time),
+                    departureTime = GtfsStopTime.parseGtfsTime(departure_time),
+                    headsign = stop_headsign,
+                    pickupType = pickup_type,
+                    dropOffType = drop_off_type,
+                )
+            } }
+
+
+    private suspend fun addTrips(files: List<File>) {
+        val dao = db.tripDao
+        log.info("parsing trips...")
+        val trips = files
+            .filter { it.name == "trips.txt" }
+            .flatMap { fd -> parseTrips(fd) }
+
+        log.info("inserting trips...")
+        dao.deleteAll()
+        dao.insertOrReplaceAll(*trips.map { it.asEntity() }.toTypedArray())
+    }
+
+    private fun parseTrips(fd: File) =
+        fd.parseCsv<GtfsTrip>()
+            .map { with(it) {
+                Trip(
+                    id = trip_id,
+                    routeId = route_id,
+                    serviceId = service_id,
+                    shapeId = shape_id.ifEmpty { null },
+                    tripHeadsign = trip_headsign,
+                    directionId = direction_id,
+                    blockId = block_id,
+                    wheelchairAccessible = wheelchair_accessible,
+                )
+            } }
 
     private fun extract(fd: File): List<File> {
         val outputs = mutableListOf<File>()
@@ -114,7 +222,7 @@ class GtfsHandler(
 
     private fun extractAll(fd: File) = extract(fd).flatMap(::extract)
 
-    private fun <T> File.parseCsv(): List<T> = this
+    private inline fun <reified T> File.parseCsv(): List<T> = this
         .readText()
         .replace("\uFEFF", "") // remove bom
         .replace("\r\n", "\n") // crlf -> lf

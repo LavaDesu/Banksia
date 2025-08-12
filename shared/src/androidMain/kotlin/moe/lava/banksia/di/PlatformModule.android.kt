@@ -6,6 +6,7 @@ import androidx.room.RoomDatabase
 import moe.lava.banksia.room.Database
 import org.koin.core.parameter.ParametersHolder
 import org.koin.core.scope.Scope
+import org.koin.dsl.module
 
 class AndroidDatabaseBuilder(val ctx: Context) : PlatformDatabaseBuilder {
     override fun getBuilder(): RoomDatabase.Builder<Database> {
@@ -19,4 +20,6 @@ class AndroidDatabaseBuilder(val ctx: Context) : PlatformDatabaseBuilder {
 }
 
 actual fun Scope.provideDatabaseBuilder(p: ParametersHolder): PlatformDatabaseBuilder =
-    AndroidDatabaseBuilder(p.get())
+    AndroidDatabaseBuilder(get())
+
+internal actual val ExtPlatformModule = module { }

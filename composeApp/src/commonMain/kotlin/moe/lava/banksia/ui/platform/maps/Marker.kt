@@ -1,7 +1,7 @@
 package moe.lava.banksia.ui.platform.maps
 
 import androidx.compose.ui.graphics.Color
-import moe.lava.banksia.data.ptv.structures.PtvRouteType
+import moe.lava.banksia.model.RouteType
 import moe.lava.banksia.util.Point
 
 sealed class Marker {
@@ -9,14 +9,14 @@ sealed class Marker {
 
     data class Stop(
         override val point: Point,
-        val id: Int,
-        val type: PtvRouteType,
+        val id: String,
+        val type: RouteType,
         val colour: Color,
     ) : Marker()
 
     data class Vehicle(
         override val point: Point,
         val ref: String,
-        val type: PtvRouteType,
+        val type: RouteType,
     ) : Marker()
 }

@@ -1,11 +1,10 @@
 package moe.lava.banksia.model
 
-import androidx.room.Entity
-import androidx.room.PrimaryKey
+import kotlinx.serialization.Serializable
 
-@Entity
+@Serializable
 data class Route(
-    @PrimaryKey val id: String,
+    val id: String,
     val type: RouteType,
     val number: String?,
     val name: String,

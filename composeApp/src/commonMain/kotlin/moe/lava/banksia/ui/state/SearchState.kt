@@ -1,6 +1,6 @@
 package moe.lava.banksia.ui.state
 
-import moe.lava.banksia.data.ptv.structures.PtvRouteType
+import moe.lava.banksia.model.RouteType
 
 data class SearchState(
     val entries: List<SearchEntry> = listOf(),
@@ -9,7 +9,7 @@ data class SearchState(
     data class SearchEntry(
         val mainText: String,
         val subText: String?,
-        val routeId: Int,
-        val routeType: PtvRouteType,
+        val routeId: String,
+        val routeType: RouteType,
     )
 }

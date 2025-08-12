@@ -1,28 +1,51 @@
 package moe.lava.banksia.room
 
+import androidx.room.AutoMigration
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
 import androidx.sqlite.driver.bundled.BundledSQLiteDriver
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
-import moe.lava.banksia.model.Route
-import moe.lava.banksia.model.RouteType
-import moe.lava.banksia.model.Shape
+import moe.lava.banksia.room.converter.RouteTypeConverter
 import moe.lava.banksia.room.dao.RouteDao
 import moe.lava.banksia.room.dao.ShapeDao
+import moe.lava.banksia.room.dao.StopDao
+import moe.lava.banksia.room.dao.StopTimeDao
+import moe.lava.banksia.room.dao.TripDao
+import moe.lava.banksia.room.entity.RouteEntity
+import moe.lava.banksia.room.entity.ShapeEntity
+import moe.lava.banksia.room.entity.StopEntity
+import moe.lava.banksia.room.entity.StopTimeEntity
+import moe.lava.banksia.room.entity.TripEntity
 import androidx.room.Database as DatabaseAnnotation
 
-@DatabaseAnnotation(entities = [Route::class, Shape::class], version = 1)
-@TypeConverters(RouteType.Companion::class)
+@DatabaseAnnotation(
+    version = 2,
+    entities = [
+        RouteEntity::class,
+        ShapeEntity::class,
+        StopEntity::class,
+        StopTimeEntity::class,
+        TripEntity::class,
+    ],
+    autoMigrations = [
+        AutoMigration(from = 1, to = 2),
+    ]
+)
+@TypeConverters(RouteTypeConverter::class)
 abstract class Database : RoomDatabase() {
-    abstract fun getRouteDao(): RouteDao
-    abstract fun getShapeDao(): ShapeDao
+    abstract val routeDao: RouteDao
+    abstract val shapeDao: ShapeDao
+    abstract val stopDao: StopDao
+    abstract val stopTimeDao: StopTimeDao
+    abstract val tripDao: TripDao
 
     companion object {
         fun build(base: Builder<Database>) =
-            base.fallbackToDestructiveMigrationOnDowngrade(true)
+            base.fallbackToDestructiveMigration(true)
                 .setDriver(BundledSQLiteDriver())
                 .setQueryCoroutineContext(Dispatchers.IO)
+//                .fallbackToDestructiveMigration(true)
                 .build()
     }
 }

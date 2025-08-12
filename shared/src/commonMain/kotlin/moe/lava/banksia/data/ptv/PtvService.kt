@@ -13,7 +13,6 @@ import io.ktor.client.request.url
 import io.ktor.client.statement.HttpResponse
 import io.ktor.http.appendPathSegments
 import io.ktor.serialization.kotlinx.json.json
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
@@ -22,9 +21,10 @@ import moe.lava.banksia.data.ptv.structures.PtvDeparture
 import moe.lava.banksia.data.ptv.structures.PtvDirection
 import moe.lava.banksia.data.ptv.structures.PtvRoute
 import moe.lava.banksia.data.ptv.structures.PtvRouteType
+import moe.lava.banksia.data.ptv.structures.PtvRouteType.Companion.asPtvType
 import moe.lava.banksia.data.ptv.structures.PtvRun
 import moe.lava.banksia.data.ptv.structures.PtvStop
-import moe.lava.banksia.util.CacheMap
+import moe.lava.banksia.model.RouteType
 import moe.lava.banksia.util.LoopFlow.Companion.initWith
 import moe.lava.banksia.util.error
 import moe.lava.banksia.util.log
@@ -59,16 +59,15 @@ suspend inline fun <K, V> MutableMap<K, V>.getOrPutSuspend(key: K, defaultValue:
     return this[key]!!
 }
 
-class PtvService(coroutineScope: CoroutineScope) {
+class PtvService() {
     class PtvCache(
-        coroutineScope: CoroutineScope,
-        val directions: CacheMap<Pair<Int, Int>, PtvDirection> = CacheMap(coroutineScope),
-        val routes: CacheMap<Int, PtvRoute> = CacheMap(coroutineScope),
-        val runs: CacheMap<String, PtvRun> = CacheMap(coroutineScope),
-        val stops: CacheMap<Int, PtvStop> = CacheMap(coroutineScope),
+        val directions: MutableMap<Pair<Int, Int>, PtvDirection> = mutableMapOf(),
+        val routes: MutableMap<Int, PtvRoute> = mutableMapOf(),
+        val runs: MutableMap<String, PtvRun> = mutableMapOf(),
+        val stops: MutableMap<Int, PtvStop> = mutableMapOf(),
     )
 
-    val cache = PtvCache(coroutineScope)
+    val cache = PtvCache()
 
     private val client = HttpClient() {
         install(ContentNegotiation) {
@@ -226,6 +225,20 @@ class PtvService(coroutineScope: CoroutineScope) {
 
         return cache.directions[directionId to routeId]!!
     }
+
+    suspend fun departures(routeType: RouteType, stopId: String): Responses.PtvDeparturesResponse =
+        client
+            .safeGet ("departures") {
+                url {
+                    appendPathSegments(
+                        "route_type", routeType.asPtvType().ordinal.toString(),
+                        "stop", stopId.toString(),
+                    )
+                    parameter("expand", "Route")
+                    parameter("expand", "Direction")
+                    parameter("gtfs", "true")
+                }
+            }.body()
 
     suspend fun departures(routeType: PtvRouteType, stopId: Int): Responses.PtvDeparturesResponse =
         client

@@ -5,6 +5,7 @@ import androidx.room.RoomDatabase
 import moe.lava.banksia.room.Database
 import org.koin.core.parameter.ParametersHolder
 import org.koin.core.scope.Scope
+import org.koin.dsl.module
 import java.io.File
 
 class JvmDatabaseBuilder() : PlatformDatabaseBuilder {
@@ -18,3 +19,5 @@ class JvmDatabaseBuilder() : PlatformDatabaseBuilder {
 
 actual fun Scope.provideDatabaseBuilder(p: ParametersHolder): PlatformDatabaseBuilder =
     JvmDatabaseBuilder()
+
+internal actual val ExtPlatformModule = module {  }

@@ -29,14 +29,14 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.coerceAtMost
 import androidx.compose.ui.unit.dp
-import moe.lava.banksia.ui.BanksiaEvent
 import moe.lava.banksia.ui.components.RouteIcon
+import moe.lava.banksia.ui.screens.MapScreenEvent
 import moe.lava.banksia.ui.state.InfoPanelState
 
 @Composable
 fun InfoPanel(
     state: InfoPanelState,
-    onEvent: (BanksiaEvent) -> Unit,
+    onEvent: (MapScreenEvent) -> Unit,
     onPeekHeightChange: (Dp) -> Unit,
 ) {
     if (state is InfoPanelState.None)
@@ -74,7 +74,7 @@ fun InfoPanel(
 @Composable
 private inline fun RouteInfoPanel(
     state: InfoPanelState.Route,
-    onEvent: (BanksiaEvent) -> Unit,
+    onEvent: (MapScreenEvent) -> Unit,
 ) {
     Column(Modifier.Companion.fillMaxWidth()) {
         Row {
@@ -92,7 +92,7 @@ private inline fun RouteInfoPanel(
 @Composable
 private inline fun RunInfoPanel(
     state: InfoPanelState.Run,
-    onEvent: (BanksiaEvent) -> Unit,
+    onEvent: (MapScreenEvent) -> Unit,
 ) {
     Column(Modifier.Companion.fillMaxWidth()) {
         Row {
@@ -110,7 +110,7 @@ private inline fun RunInfoPanel(
 @Composable
 private inline fun StopInfoPanel(
     state: InfoPanelState.Stop,
-    onEvent: (BanksiaEvent) -> Unit,
+    onEvent: (MapScreenEvent) -> Unit,
 ) {
     Column(Modifier.Companion.fillMaxWidth()) {
         Text(

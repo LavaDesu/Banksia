@@ -23,15 +23,15 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
-import moe.lava.banksia.ui.BanksiaEvent
 import moe.lava.banksia.ui.components.RouteIcon
+import moe.lava.banksia.ui.screens.MapScreenEvent
 import moe.lava.banksia.ui.state.SearchState
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun Searcher(
     state: SearchState,
-    onEvent: (BanksiaEvent) -> Unit,
+    onEvent: (MapScreenEvent) -> Unit,
     expanded: Boolean,
     onExpandedChange: (Boolean) -> Unit,
 ) {
@@ -55,7 +55,7 @@ fun Searcher(
                 SearchBarDefaults.InputField(
                     modifier = Modifier.Companion.padding(horizontal = 20.dp - animatedPadding),
                     query = state.text,
-                    onQueryChange = { onEvent(BanksiaEvent.SearchUpdate(it)) },
+                    onQueryChange = { onEvent(MapScreenEvent.SearchUpdate(it)) },
                     onSearch = {},
                     expanded = expanded,
                     onExpandedChange = onExpandedChange,
@@ -67,7 +67,7 @@ fun Searcher(
                                 contentDescription = null,
                                 modifier = Modifier.Companion.clickable {
                                     onEvent(
-                                        BanksiaEvent.SearchUpdate(
+                                        MapScreenEvent.SearchUpdate(
                                             ""
                                         )
                                     )
@@ -92,8 +92,8 @@ fun Searcher(
                                 .padding(horizontal = 16.dp, vertical = 4.dp)
                                 .clickable {
                                     onExpandedChange(false)
-                                    onEvent(BanksiaEvent.SearchUpdate(""))
-                                    onEvent(BanksiaEvent.SelectRoute(entry.routeId))
+                                    onEvent(MapScreenEvent.SearchUpdate(""))
+                                    onEvent(MapScreenEvent.SelectRoute(entry.routeId))
                                 }
                         )
                     }
