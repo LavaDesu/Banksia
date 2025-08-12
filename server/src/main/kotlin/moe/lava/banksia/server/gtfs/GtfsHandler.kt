@@ -11,6 +11,7 @@ import io.ktor.util.logging.Logger
 import io.ktor.utils.io.copyAndClose
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.modules.EmptySerializersModule
+import moe.lava.banksia.Constants
 import moe.lava.banksia.model.Route
 import moe.lava.banksia.model.Shape
 import moe.lava.banksia.model.Stop
@@ -38,7 +39,8 @@ class GtfsHandler(
 
     suspend fun update(datasetUrl: String) {
         val parentDir = datasetPath.parentFile
-        if (parentDir.exists() && !log.isTraceEnabled) // XXX: hacky check for dev env
+        @Suppress("SimplifyBooleanWithConstants", "KotlinConstantConditions")
+        if (parentDir.exists() && !Constants.devMode)
             parentDir.deleteRecursively()
 
         parentDir.mkdirs()
@@ -53,16 +55,26 @@ class GtfsHandler(
         }
 
         log.info("extracting...")
-//        val files = extractAll(datasetPath)
-        val files = datasetPath.parentFile
-            .listFiles { it.isDirectory }
-            .flatMap { d -> d.listFiles { f -> f.extension == "txt" }.toList() }
+        @Suppress("KotlinConstantConditions")
+        val files = if (Constants.devMode) {
+            datasetPath.parentFile
+                .listFiles { it.isDirectory }
+                .flatMap { d -> d.listFiles { f -> f.extension == "txt" }.toList() }
+                .ifEmpty { extractAll(datasetPath) }
+        } else {
+            extractAll(datasetPath)
+        }
 
         addRoutes(files)
         addStops(files)
         addShapes(files)
         addTrips(files)
         addStopTimes(files)
+
+        @Suppress("KotlinConstantConditions")
+        if (!Constants.devMode) {
+            parentDir.deleteRecursively()
+        }
 
         log.info("done!")
     }

@@ -16,6 +16,7 @@ import io.ktor.server.routing.routing
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import moe.lava.banksia.Constants
 import moe.lava.banksia.di.CommonModules
 import moe.lava.banksia.room.dao.RouteDao
 import moe.lava.banksia.room.dao.StopDao
@@ -43,7 +44,15 @@ fun Application.module() {
 
     routing {
         get("/update") {
-            val datasetUrl = call.parameters["url"] ?: "https://opendata.transport.vic.gov.au/dataset/3f4e292e-7f8a-4ffe-831f-1953be0fe448/resource/e4966d78-dc64-4a1d-a751-2470c9eaf034/download/gtfs.zip"
+            val key = call.parameters["key"]
+            if (key != Constants.updateKey) {
+                call.respond(HttpStatusCode.Forbidden)
+                return@get
+            }
+
+            val datasetUuid = call.parameters["uuid"] ?: "e4966d78-dc64-4a1d-a751-2470c9eaf034"
+            val datasetUrl = call.parameters["url"]
+                ?: "https://opendata.transport.vic.gov.au/dataset/3f4e292e-7f8a-4ffe-831f-1953be0fe448/resource/${datasetUuid}/download/gtfs.zip"
             call.respondText("received")
             launch(context = Dispatchers.IO) {
                 val handler by inject<GtfsHandler>()
