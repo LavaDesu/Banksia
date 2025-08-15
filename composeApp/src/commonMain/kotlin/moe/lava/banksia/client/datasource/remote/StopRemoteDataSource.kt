@@ -6,6 +6,6 @@ import io.ktor.client.request.get
 import moe.lava.banksia.model.Stop
 
 class StopRemoteDataSource(val client: HttpClient) {
-    suspend fun get(id: String) = client.get("/stops/${id}").body<Stop>()
-    suspend fun getByRoute(id: String) = client.get("/route_stops/${id}").body<List<Stop>>()
+    suspend fun get(id: String) = client.get("stops/${id}").body<Stop>()
+    suspend fun getByRoute(id: String) = client.get("route_stops/${id}").body<List<Stop>>()
 }

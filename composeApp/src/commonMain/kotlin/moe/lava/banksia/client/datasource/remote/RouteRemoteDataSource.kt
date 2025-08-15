@@ -6,6 +6,6 @@ import io.ktor.client.request.get
 import moe.lava.banksia.model.Route
 
 class RouteRemoteDataSource(val client: HttpClient) {
-    suspend fun get(id: String) = client.get("/routes/${id}").body<Route>()
-    suspend fun getAll() = client.get("/routes").body<List<Route>>()
+    suspend fun get(id: String) = client.get("routes/${id}").body<Route>()
+    suspend fun getAll() = client.get("routes").body<List<Route>>()
 }
