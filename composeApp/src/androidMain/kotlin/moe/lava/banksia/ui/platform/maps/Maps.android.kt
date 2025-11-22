@@ -106,7 +106,7 @@ actual fun Maps(
     }
 
     GoogleMap(
-        modifier = Modifier.Companion.fillMaxSize(),
+        modifier = Modifier.fillMaxSize(),
         cameraPositionState = camPos,
         mapColorScheme = if (isSystemInDarkTheme()) {
             ComposeMapColorScheme.DARK
@@ -125,7 +125,7 @@ actual fun Maps(
             myLocationButtonEnabled = false,
             mapToolbarEnabled = false,
         ),
-        contentPadding = WindowInsets.Companion.safeDrawing.add(extInsets).asPaddingValues()
+        contentPadding = WindowInsets.safeDrawing.add(extInsets).asPaddingValues()
     ) {
         // [TODO]: Slight lag when routes with many stops such as the 901 bus is set
         for (marker in state.stops) {
@@ -140,7 +140,7 @@ actual fun Maps(
                 }
             ) {
                 Box(
-                    modifier = Modifier.Companion
+                    modifier = Modifier
                         .size(12.dp)
                         .clip(CircleShape)
                         .background(BanksiaTheme.colors.surface)

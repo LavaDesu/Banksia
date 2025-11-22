@@ -45,7 +45,7 @@ fun InfoPanel(
     val localDensity = LocalDensity.current
 
     Column(
-        Modifier.Companion
+        Modifier
             .fillMaxWidth()
             .padding(horizontal = 24.dp)
             .heightIn(max = 250.dp)
@@ -64,10 +64,10 @@ fun InfoPanel(
 
             if (state.loading)
                 CircularProgressIndicator(
-                    modifier = Modifier.Companion.width(32.dp).align(Alignment.Companion.CenterEnd)
+                    modifier = Modifier.width(32.dp).align(Alignment.CenterEnd)
                 )
         }
-        Spacer(Modifier.Companion.windowInsetsBottomHeight(WindowInsets.Companion.safeContent))
+        Spacer(Modifier.windowInsetsBottomHeight(WindowInsets.safeContent))
     }
 }
 
@@ -76,14 +76,14 @@ private inline fun RouteInfoPanel(
     state: InfoPanelState.Route,
     onEvent: (MapScreenEvent) -> Unit,
 ) {
-    Column(Modifier.Companion.fillMaxWidth()) {
+    Column(Modifier.fillMaxWidth()) {
         Row {
             RouteIcon(routeType = state.type)
             Text(
                 state.name,
                 style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.Companion.SemiBold,
-                textAlign = TextAlign.Companion.Start
+                fontWeight = FontWeight.SemiBold,
+                textAlign = TextAlign.Start
             )
         }
     }
@@ -94,14 +94,14 @@ private inline fun RunInfoPanel(
     state: InfoPanelState.Run,
     onEvent: (MapScreenEvent) -> Unit,
 ) {
-    Column(Modifier.Companion.fillMaxWidth()) {
+    Column(Modifier.fillMaxWidth()) {
         Row {
             RouteIcon(routeType = state.type)
             Text(
                 "${state.direction} via ${state.routeName ?: "..."}",
                 style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.Companion.SemiBold,
-                textAlign = TextAlign.Companion.Start
+                fontWeight = FontWeight.SemiBold,
+                textAlign = TextAlign.Start
             )
         }
     }
@@ -112,37 +112,37 @@ private inline fun StopInfoPanel(
     state: InfoPanelState.Stop,
     onEvent: (MapScreenEvent) -> Unit,
 ) {
-    Column(Modifier.Companion.fillMaxWidth()) {
+    Column(Modifier.fillMaxWidth()) {
         Text(
             state.name,
             style = MaterialTheme.typography.titleLarge,
-            fontWeight = FontWeight.Companion.SemiBold,
-            textAlign = TextAlign.Companion.Start
+            fontWeight = FontWeight.SemiBold,
+            textAlign = TextAlign.Start
         )
         state.subname?.let {
             Text(
                 "/ $it",
-                modifier = Modifier.Companion.padding(start = 5.dp),
+                modifier = Modifier.padding(start = 5.dp),
                 style = MaterialTheme.typography.titleSmall,
-                color = Color.Companion.Gray,
-                fontWeight = FontWeight.Companion.SemiBold,
-                textAlign = TextAlign.Companion.Start
+                color = Color.Gray,
+                fontWeight = FontWeight.SemiBold,
+                textAlign = TextAlign.Start
             )
         }
         state.departures?.let {
-            Spacer(Modifier.Companion.height(5.dp))
+            Spacer(Modifier.height(5.dp))
             it.forEach { (name, formatted) ->
-                Row(verticalAlignment = Alignment.Companion.CenterVertically) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(
                         name,
                         style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Companion.SemiBold
+                        fontWeight = FontWeight.SemiBold
                     )
                     Text(
                         formatted,
                         maxLines = 1,
-                        overflow = TextOverflow.Companion.Ellipsis,
-                        modifier = Modifier.Companion.padding(horizontal = 5.dp)
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.padding(horizontal = 5.dp)
                     )
                 }
             }

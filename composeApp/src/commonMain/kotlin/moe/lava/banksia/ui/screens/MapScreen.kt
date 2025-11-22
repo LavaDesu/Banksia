@@ -87,7 +87,7 @@ fun MapScreen(
     ) {
         val offset = runCatching { sheetState.requireOffset() }
         val scaffoldOffset = offset.getOrDefault(0.0f).roundToInt()
-        (getScreenHeight() - scaffoldOffset - WindowInsets.Companion.safeDrawing.getBottom(
+        (getScreenHeight() - scaffoldOffset - WindowInsets.safeDrawing.getBottom(
             LocalDensity.current)).coerceAtLeast(0)
     } else 0
 
@@ -108,7 +108,7 @@ fun MapScreen(
         BottomSheetScaffold(
             scaffoldState = scaffoldState,
             sheetPeekHeight = (handleHeight + peekHeight) * peekHeightMultiplier,
-            modifier = Modifier.Companion.fillMaxSize(),
+            modifier = Modifier.fillMaxSize(),
             sheetContent = {
                 InfoPanel(
                     state = infoState,
@@ -119,20 +119,20 @@ fun MapScreen(
             sheetDragHandle = {
                 val density = LocalDensity.current
                 Box(
-                    Modifier.Companion
+                    Modifier
                         .fillMaxWidth()
                         .padding(horizontal = 10.dp)
                         .onSizeChanged {
                             handleHeight = with(density) { it.height.toDp() }
                         }
                 ) {
-                    BottomSheetDefaults.DragHandle(modifier = Modifier.Companion.align(Alignment.Companion.Center))
+                    BottomSheetDefaults.DragHandle(modifier = Modifier.align(Alignment.Center))
                 }
             },
             sheetSwipeEnabled = sheetSwipeEnabled,
         ) {
             Maps(
-                modifier = Modifier.Companion.fillMaxSize(),
+                modifier = Modifier.fillMaxSize(),
                 state = mapState,
                 onEvent = viewModel::handleEvent,
                 cameraPositionFlow = viewModel.cameraChangeEmitter,
@@ -175,12 +175,14 @@ fun MapScreen(
             }
 
             Box(
-                Modifier.Companion.windowInsetsPadding(
-                    WindowInsets.Companion.safeContent.add(
-                        WindowInsets(bottom = extInsets)
-                    )
-                ),
-                contentAlignment = Alignment.Companion.BottomEnd
+                modifier = Modifier
+                    .fillMaxSize()
+                    .windowInsetsPadding(
+                        WindowInsets.safeContent.add(
+                            WindowInsets(bottom = extInsets)
+                        )
+                    ),
+                contentAlignment = Alignment.BottomEnd
             ) {
                 FloatingActionButton(
                     containerColor = MaterialTheme.colorScheme.surfaceContainer,

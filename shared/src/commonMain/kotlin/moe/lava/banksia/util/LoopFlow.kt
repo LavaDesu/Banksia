@@ -28,7 +28,7 @@ class LoopFlow<T>(private val block: suspend FlowCollector<T>.() -> Unit) : Abst
         fun <T> Flow<T>.delayFor(delay: Long) = apply {
             @Suppress("UnusedFlow")
             if (this is LoopFlow)
-                this.delayMs = delay;
+                this.delayMs = delay
             else
                 throw IllegalStateException()
         }
@@ -36,7 +36,7 @@ class LoopFlow<T>(private val block: suspend FlowCollector<T>.() -> Unit) : Abst
         fun <T> Flow<T>.initWith(block: suspend FlowCollector<T>.() -> Unit) = apply {
             @Suppress("UnusedFlow")
             if (this is LoopFlow)
-                this.init = block;
+                this.init = block
             else
                 throw IllegalStateException()
         }
@@ -44,7 +44,7 @@ class LoopFlow<T>(private val block: suspend FlowCollector<T>.() -> Unit) : Abst
         fun <T> Flow<T>.waitFor(waiter: suspend () -> Unit) = apply {
             @Suppress("UnusedFlow")
             if (this is LoopFlow)
-                this.waiter = waiter;
+                this.waiter = waiter
             else
                 throw IllegalStateException()
         }

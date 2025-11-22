@@ -241,7 +241,7 @@ class MapScreenViewModel(
             if (element.size >= 5)
                 return@forEach
 
-            val date = Instant.Companion.parse(dep.estimatedDepartureUtc ?: dep.scheduledDepartureUtc)
+            val date = Instant.parse(dep.estimatedDepartureUtc ?: dep.scheduledDepartureUtc)
             val min = (date - Clock.System.now()).inWholeMinutes
             if (min <= -5)
                 return@forEach
@@ -344,13 +344,13 @@ class MapScreenViewModel(
         var west = Double.MAX_VALUE
         points.forEach {
             if (it.lat > north)
-                north = it.lat;
+                north = it.lat
             if (it.lat < south)
-                south = it.lat;
+                south = it.lat
             if (it.lng > east)
-                east = it.lng;
+                east = it.lng
             if (it.lng < west)
-                west = it.lng;
+                west = it.lng
         }
         return CameraPositionBounds(Point(north, east), Point(south, west))
     }

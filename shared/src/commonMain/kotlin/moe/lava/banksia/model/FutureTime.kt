@@ -28,7 +28,7 @@ data class FutureTime(
         fun FutureTime.asInt() =
             trueHour * 3600 + minute * 60 + second
 
-        fun fromInt(int: Int) = FutureTime.from(
+        fun fromInt(int: Int) = from(
             int / 3600,
             (int / 60) % 60,
             int % 60,

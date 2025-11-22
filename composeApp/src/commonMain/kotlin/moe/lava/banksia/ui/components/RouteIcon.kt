@@ -128,9 +128,9 @@ const val ICON_PADDING = 0.25f
 @Composable
 private fun RouteIconPreview() {
     Row {
-        RouteIcon(routeType = RouteType.MetroTrain)
-        RouteIcon(routeType = RouteType.MetroTram)
-        RouteIcon(routeType = RouteType.MetroBus)
+        RouteIcon(routeType = MetroTrain)
+        RouteIcon(routeType = MetroTram)
+        RouteIcon(routeType = MetroBus)
     }
 }
 

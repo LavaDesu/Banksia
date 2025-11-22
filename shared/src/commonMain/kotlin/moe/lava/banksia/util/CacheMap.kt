@@ -29,7 +29,7 @@ class CacheMap<K, V>(
     }
 
     override fun put(key: K, value: V): V? {
-        keyExpiries.put(key, counter + expiryMinutes + 1)
+        keyExpiries[key] = counter + expiryMinutes + 1
         return innerMap.put(key, value)
     }
 

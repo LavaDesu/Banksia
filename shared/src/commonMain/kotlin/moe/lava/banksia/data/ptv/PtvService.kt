@@ -69,7 +69,7 @@ class PtvService() {
 
     val cache = PtvCache()
 
-    private val client = HttpClient() {
+    private val client = HttpClient {
         install(ContentNegotiation) {
             json(Json {
                 ignoreUnknownKeys = true
@@ -232,7 +232,7 @@ class PtvService() {
                 url {
                     appendPathSegments(
                         "route_type", routeType.asPtvType().ordinal.toString(),
-                        "stop", stopId.toString(),
+                        "stop", stopId,
                     )
                     parameter("expand", "Route")
                     parameter("expand", "Direction")

@@ -25,7 +25,7 @@ val ClientModule = module {
     // HTTP Clients
     singleOf(::PtvService)
     single {
-        HttpClient() {
+        HttpClient {
             install(ContentNegotiation) {
                 json(Json {
                     ignoreUnknownKeys = true

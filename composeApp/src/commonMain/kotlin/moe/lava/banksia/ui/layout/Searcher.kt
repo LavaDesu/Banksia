@@ -44,16 +44,16 @@ fun Searcher(
         label = "padding"
     )
 
-    Box(modifier = Modifier.Companion.fillMaxSize()) {
+    Box(modifier = Modifier.fillMaxSize()) {
         SearchBar(
-            modifier = Modifier.Companion
-                .align(Alignment.Companion.TopCenter)
+            modifier = Modifier
+                .align(Alignment.TopCenter)
                 .fillMaxWidth()
                 .padding(horizontal = animatedPadding),
             shadowElevation = 6.dp, // Elevation level 3
             inputField = {
                 SearchBarDefaults.InputField(
-                    modifier = Modifier.Companion.padding(horizontal = 20.dp - animatedPadding),
+                    modifier = Modifier.padding(horizontal = 20.dp - animatedPadding),
                     query = state.text,
                     onQueryChange = { onEvent(MapScreenEvent.SearchUpdate(it)) },
                     onSearch = {},
@@ -65,7 +65,7 @@ fun Searcher(
                             Icon(
                                 imageVector = Icons.Default.Clear,
                                 contentDescription = null,
-                                modifier = Modifier.Companion.clickable {
+                                modifier = Modifier.clickable {
                                     onEvent(
                                         MapScreenEvent.SearchUpdate(
                                             ""
@@ -79,15 +79,15 @@ fun Searcher(
             expanded = expanded,
             onExpandedChange = onExpandedChange,
         ) {
-            LazyColumn(modifier = Modifier.Companion.fillMaxWidth()) {
+            LazyColumn(modifier = Modifier.fillMaxWidth()) {
                 for (entry in state.entries) {
                     item {
                         ListItem(
                             headlineContent = { Text(entry.mainText) },
                             supportingContent = { entry.subText?.let { Text(it) } },
                             leadingContent = { RouteIcon(routeType = entry.routeType) },
-                            colors = ListItemDefaults.colors(containerColor = Color.Companion.Transparent),
-                            modifier = Modifier.Companion
+                            colors = ListItemDefaults.colors(containerColor = Color.Transparent),
+                            modifier = Modifier
                                 .fillMaxWidth()
                                 .padding(horizontal = 16.dp, vertical = 4.dp)
                                 .clickable {
