@@ -48,7 +48,8 @@ kotlin {
             implementation(compose.foundation)
             implementation(compose.material)
             implementation(compose.materialIconsExtended) // TODO: move to symbols
-            implementation(compose.material3)
+            implementation("org.jetbrains.compose.material3:material3:1.8.2") // TODO: 1.9.0 has buggy bottom sheet behaviour
+//            implementation(compose.material3)
             implementation(compose.ui)
             implementation(compose.components.resources)
             implementation(compose.components.uiToolingPreview)
